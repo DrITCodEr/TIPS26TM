@@ -1,10 +1,32 @@
-import { StubPage } from "@/components/layout/StubPage";
+import { SectionTitle } from "@/components/ui/Card";
+import { InfoBanner } from "@/components/ui/InfoBanner";
+import { AlgorithmSwitcher } from "@/components/setup/AlgorithmSwitcher";
+import { Presets } from "@/components/setup/Presets";
+import { FactorSliders } from "@/components/setup/FactorSliders";
+import { SimDepthSlider } from "@/components/setup/SimDepthSlider";
+import { RunSimulationButton } from "@/components/setup/RunSimulationButton";
 
 export default function SetupPage() {
   return (
-    <StubPage title="Setup" emoji="⚙️" phase={3}>
-      Algorithmus-Wahl (TIPS-26.1 Classic / TIPS-26.2 Advanced), 6 Presets,
-      9 Faktor-Slider, Simulations-Tiefe (1K…1M) und der Start-Button.
-    </StubPage>
+    <section>
+      <InfoBanner icon="⚙">
+        <strong>9 Faktoren bestimmen die Vorhersage.</strong> Bewege die Slider,
+        um zu steuern, wie wichtig jeder Faktor sein soll.
+      </InfoBanner>
+
+      <SectionTitle>🧮 Algorithmus</SectionTitle>
+      <AlgorithmSwitcher />
+
+      <SectionTitle>🎯 Voreinstellungen</SectionTitle>
+      <Presets />
+
+      <SectionTitle>🎚️ Gewichtungen</SectionTitle>
+      <FactorSliders />
+
+      <SectionTitle>🎲 Simulations-Tiefe</SectionTitle>
+      <SimDepthSlider />
+
+      <RunSimulationButton />
+    </section>
   );
 }

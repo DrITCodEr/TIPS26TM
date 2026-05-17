@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { StatusBar } from "./StatusBar";
 import { AppHeader } from "./AppHeader";
 import { BottomNav } from "./BottomNav";
+import { LoadingOverlay } from "@/components/loading/LoadingOverlay";
 
 export function PhoneFrame({ children }: { children: ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
       <AppHeader />
       <div className="scroll-container">{children}</div>
       <BottomNav />
+      <LoadingOverlay />
     </div>
   );
 }
