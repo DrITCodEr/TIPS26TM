@@ -237,6 +237,16 @@ export function HomeOverview() {
         , justiere die Gewichtungen, starte die Simulation und schaue Dir
         Gruppen, Spiele oder Ranking an.
       </InfoBanner>
+
+      <div className="mt-4 text-center">
+        <Link
+          href="/backtest"
+          className="inline-flex items-center gap-2 text-[12px] font-bold underline"
+          style={{ color: "var(--mint)" }}
+        >
+          🔬 Backtest gegen WMs 2014 / 2018 / 2022 →
+        </Link>
+      </div>
     </>
   );
 }
