@@ -5,6 +5,7 @@ import { runSensitivity } from "@/lib/algorithms/sensitivity";
 import { TEAMS } from "@/lib/data/teams";
 import { SCHEDULE } from "@/lib/data/schedule";
 import { MARKT_QUOTEN } from "@/lib/data/marktQuoten";
+import { PLAYER_AGGREGATES } from "@/lib/data/playerAggregates";
 import type { WorkerRequest, WorkerResponse } from "./messages";
 
 declare const self: DedicatedWorkerGlobalScope;
@@ -24,6 +25,7 @@ self.addEventListener("message", async (e: MessageEvent<WorkerRequest>) => {
         teams: TEAMS,
         schedule: SCHEDULE,
         marktQuoten: MARKT_QUOTEN,
+        playerAggregates: PLAYER_AGGREGATES,
         onProgress: (value) => post({ type: "progress", value }),
       });
       post({ type: "simulationResult", value: result });
@@ -37,6 +39,7 @@ self.addEventListener("message", async (e: MessageEvent<WorkerRequest>) => {
         teams: TEAMS,
         schedule: SCHEDULE,
         marktQuoten: MARKT_QUOTEN,
+        playerAggregates: PLAYER_AGGREGATES,
         onProgress: (value) => post({ type: "progress", value }),
       });
       post({ type: "sensitivityResult", value: result });

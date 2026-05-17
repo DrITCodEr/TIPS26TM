@@ -2,6 +2,7 @@ import type { Team } from "@/lib/types/team";
 import type { Match } from "@/lib/types/match";
 import type { FactorWeights } from "@/lib/types/factors";
 import type { MarktQuoten } from "@/lib/types/odds";
+import type { PlayerAggregates } from "@/lib/types/player";
 import type { AlgorithmVersion } from "@/lib/types/simulation";
 import { FAKTOREN } from "@/lib/data/factors";
 import { calculateStrengths } from "./index";
@@ -37,6 +38,7 @@ export interface SensitivityConfig {
   teams: Team[];
   schedule: Match[];
   marktQuoten?: MarktQuoten;
+  playerAggregates?: Record<string, PlayerAggregates>;
   rng?: Rng;
   onProgress?: (progress: number) => void;
 }
@@ -87,6 +89,7 @@ export async function runSensitivity(
     teams,
     schedule,
     marktQuoten,
+    playerAggregates,
     rng = defaultRng,
     onProgress,
   } = config;
@@ -96,7 +99,13 @@ export async function runSensitivity(
 
   for (let p = 0; p < numPerturbations; p++) {
     const weights = perturbWeights(baseWeights, rangePercent, rng);
-    const staerken = calculateStrengths(algorithm, teams, weights, marktQuoten);
+    const staerken = calculateStrengths(
+      algorithm,
+      teams,
+      weights,
+      marktQuoten,
+      playerAggregates,
+    );
 
     // Schlanke Sub-Sim: reuse Buffers
     const teamStats = teams.map(() => ({

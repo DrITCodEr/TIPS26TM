@@ -4,6 +4,7 @@ import { useSimulationStore } from "@/lib/stores/simulationStore";
 import { TEAMS } from "@/lib/data/teams";
 import { SCHEDULE } from "@/lib/data/schedule";
 import { FAKTOREN } from "@/lib/data/factors";
+import { PLAYER_AGGREGATES } from "@/lib/data/playerAggregates";
 import { normalizeFactor } from "@/lib/algorithms/normalize";
 import { AlgorithmBadge } from "@/components/ui/AlgorithmBadge";
 import { SectionTitle, Card } from "@/components/ui/Card";
@@ -204,6 +205,58 @@ export function GermanyProfile() {
           <li>• <strong>1/16:</strong> Di, 30.06. · Arlington/Dallas vs. 2. Gruppe I</li>
           <li>• <strong>Achtel:</strong> So, 05.07. · Houston</li>
         </ul>
+      </Card>
+
+      <SectionTitle>🧬 Player-Aggregates (für TIPS-26.3)</SectionTitle>
+      <Card>
+        {(() => {
+          const dtAgg = PLAYER_AGGREGATES[DFB_NAME];
+          const rows: { label: string; value: string; hint?: string }[] = [
+            { label: "Top-11-Marktwert", value: `${dtAgg.top11Markt} Mio €` },
+            { label: "% in Top-5-Ligen", value: `${Math.round(dtAgg.pctTop5Ligen * 100)} %`, hint: "EPL/LaLiga/Bundesliga/SerieA/Ligue1" },
+            { label: "UCL-Spieler", value: `${dtAgg.uclSpieler}/23`, hint: "regelmäßig in der UCL aktiv" },
+            { label: "Squad-xG (off.)", value: `${dtAgg.xgAttacke.toFixed(1)} / Spiel`, hint: "erwartete Tore Stürmer + offMittelfeld" },
+            { label: "xGA (def.)", value: `${dtAgg.xgaDefense.toFixed(1)} / Spiel`, hint: "erwartete Gegentore Defensive — niedriger ist besser" },
+            { label: "GK Post-Shot xG Save %", value: `${(dtAgg.gkPsxg * 100).toFixed(0)} %`, hint: "Stamm-Torhüter Save-Rate vs xG" },
+          ];
+          return (
+            <div className="space-y-2">
+              {rows.map((r) => (
+                <div
+                  key={r.label}
+                  className="flex items-baseline justify-between gap-2"
+                >
+                  <div>
+                    <div className="text-[11px] font-semibold">{r.label}</div>
+                    {r.hint && (
+                      <div
+                        className="text-[9px]"
+                        style={{ color: "var(--text-tertiary)" }}
+                      >
+                        {r.hint}
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    className="text-[12px] font-extrabold tabular-nums shrink-0"
+                    style={{ color: "var(--mint)" }}
+                  >
+                    {r.value}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+        <div
+          className="text-[9px] mt-3 pt-2"
+          style={{
+            borderTop: "1px solid var(--border-subtle)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          Demo-Daten. Echte Werte via fbref-/transfermarkt-Scraping (Roadmap §9.2).
+        </div>
       </Card>
 
       <SectionTitle>💪 Stärken-Profil</SectionTitle>

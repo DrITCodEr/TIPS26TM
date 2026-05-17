@@ -2,6 +2,7 @@ import type { Team, GroupName } from "@/lib/types/team";
 import type { Match } from "@/lib/types/match";
 import type { FactorWeights } from "@/lib/types/factors";
 import type { MarktQuoten } from "@/lib/types/odds";
+import type { PlayerAggregates } from "@/lib/types/player";
 import type {
   AlgorithmVersion,
   GroupRankStats,
@@ -187,6 +188,7 @@ export interface MonteCarloConfig {
   teams: Team[];
   schedule: Match[];
   marktQuoten?: MarktQuoten;
+  playerAggregates?: Record<string, PlayerAggregates>;
   rng?: Rng;
   /** Wird ~100x pro Run aufgerufen mit progress ∈ [0, 1]. */
   onProgress?: (progress: number) => void;
@@ -207,11 +209,18 @@ export async function runMonteCarlo(
     teams,
     schedule,
     marktQuoten,
+    playerAggregates,
     rng = defaultRng,
     onProgress,
   } = config;
 
-  const staerken = calculateStrengths(algorithm, teams, weights, marktQuoten);
+  const staerken = calculateStrengths(
+    algorithm,
+    teams,
+    weights,
+    marktQuoten,
+    playerAggregates,
+  );
 
   const teamStats: TeamStats[] = teams.map(() => createTeamStats());
   const matchStats: MatchStats[] = schedule.map(() => createMatchStats());

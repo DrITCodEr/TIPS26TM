@@ -1,19 +1,23 @@
 "use client";
 
 import { useSimulationStore } from "@/lib/stores/simulationStore";
+import type { AlgorithmVersion } from "@/lib/types/simulation";
 
-const ALGO_INFO: Record<"v1" | "v2", { title: string; tag: string; desc: string; details: string }> = {
+const ALGO_INFO: Record<
+  AlgorithmVersion,
+  { title: string; tag: string; desc: string; details: string }
+> = {
   v1: {
     title: "TIPS-26.1",
     tag: "Classic",
-    desc: "9-Faktoren linear · additive Poisson",
+    desc: "9-Faktoren · additive Poisson",
     details:
       "Lineare gewichtete Aggregation der 9 Faktoren · additive Poisson-Tor-Formel <code>λ = 1.4 + Δ·3.5</code> · unabhängige Tore Heim/Auswärts.",
   },
   v2: {
     title: "TIPS-26.2",
     tag: "Advanced",
-    desc: "Log-linear · Dixon-Coles · Markt-Blend",
+    desc: "Log-linear · Dixon-Coles · Markt",
     details:
       "Forschungs-basierte Verbesserungen (Maher 1982, Dixon-Coles 1997, Groll et al. 2019):<br/>" +
       "• Log-lineare Tor-Formel <code>λ = exp(c + Δ·s)</code> (immer positiv)<br/>" +
@@ -22,23 +26,38 @@ const ALGO_INFO: Record<"v1" | "v2", { title: string; tag: string; desc: string;
       "• Composite-Score für ELO + FIFA + Markt (Multikollinearität)<br/>" +
       "• Nicht-linearer Boost für Top-Teams mit hoher Form",
   },
+  v3: {
+    title: "TIPS-26.3",
+    tag: "Player",
+    desc: "v2 + Player-Aggregates (xG, GK, UCL)",
+    details:
+      "Erweitert v2 um aggregierte Player-Level-Features (Stübinger et al. 2020):<br/>" +
+      "• Top-11-Marktwert statt Gesamtkader<br/>" +
+      "• Anteil Spieler in Top-5-Ligen<br/>" +
+      "• Anzahl UCL-aktive Spieler<br/>" +
+      "• Squad-xG / xGA über letzte 12 Monate<br/>" +
+      "• GK Post-Shot xG Save %<br/>" +
+      "Blending: 70 % v2 + 30 % Player-Composite. <strong>Daten sind Demo-Werte</strong> — echte fbref-/transfermarkt-Anbindung in Roadmap §9.2.",
+  },
 };
 
 export function AlgorithmSwitcher() {
   const algorithm = useSimulationStore((s) => s.algorithm);
   const setAlgorithm = useSimulationStore((s) => s.setAlgorithm);
 
+  const versions: AlgorithmVersion[] = ["v1", "v2", "v3"];
+
   return (
     <>
-      <div className="grid grid-cols-2 gap-2.5">
-        {(["v1", "v2"] as const).map((version) => {
+      <div className="grid grid-cols-3 gap-1.5">
+        {versions.map((version) => {
           const info = ALGO_INFO[version];
           const active = algorithm === version;
           return (
             <button
               key={version}
               onClick={() => setAlgorithm(version)}
-              className="rounded-2xl p-3 text-left transition-all"
+              className="rounded-2xl p-2.5 text-left transition-all"
               style={{
                 background: active ? "var(--mint-soft)" : "var(--bg-secondary)",
                 border: active
@@ -47,15 +66,15 @@ export function AlgorithmSwitcher() {
                 boxShadow: active ? "0 0 12px var(--mint-glow)" : undefined,
               }}
             >
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1 gap-1">
                 <span
-                  className="text-[14px] font-extrabold"
+                  className="text-[12px] font-extrabold"
                   style={{ color: active ? "var(--mint)" : "var(--text-primary)" }}
                 >
                   {info.title}
                 </span>
                 <span
-                  className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                  className="text-[9px] font-bold px-1 py-0.5 rounded-full"
                   style={{
                     background: active ? "var(--mint)" : "var(--bg-tertiary)",
                     color: active ? "var(--bg-deep)" : "var(--text-tertiary)",
@@ -65,7 +84,7 @@ export function AlgorithmSwitcher() {
                 </span>
               </div>
               <div
-                className="text-[10px] leading-tight"
+                className="text-[9px] leading-tight"
                 style={{ color: "var(--text-tertiary)" }}
               >
                 {info.desc}
