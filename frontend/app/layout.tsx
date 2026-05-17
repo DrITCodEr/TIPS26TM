@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: "TIPS-26™ · Thomas-Irawan Predictive Stochastics",
   description:
     "WM 2026 Vorhersage-App · Monte-Carlo-Simulation mit 9-Faktoren-Ensemble",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
