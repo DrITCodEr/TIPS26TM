@@ -10,6 +10,8 @@ Referenz-Prototyp liegt im Repo-Root unter `wm2026-vorhersage.html`.
 - **Tailwind 4** (CSS-Tokens via `@theme inline`)
 - **Zustand** für State (Konfiguration + Ergebnisse + Loading)
 - **Web Worker** für Monte-Carlo & Sensitivity (Main-Thread bleibt frei)
+- **onnxruntime-web** (lazy-geladen) für XGBoost-Inferenz, sobald ein
+  trainiertes Modell exportiert ist
 - **Vitest** für deterministische Algorithmen-Tests (Mulberry32 seeded RNG)
 
 ## Setup
@@ -34,74 +36,111 @@ wird automatisch weitergeleitet — auf das Popup „In Browser öffnen" klicken
 | `npm test`           | Vitest single run              |
 | `npm run test:watch` | Vitest watch mode              |
 
+Offline-Python: `python scripts/train_aggregator.py` trainiert das ML-Aggregator-
+Modell und exportiert es als ONNX (siehe `scripts/README.md`).
+
 ## Struktur
 
 ```
-app/                  Next.js App Router (8 Routen)
+app/                  Next.js App Router (9 Routen: 8 Tabs + /backtest)
 components/layout/    PhoneFrame, StatusBar, AppHeader, BottomNav
 components/loading/   LoadingOverlay
-components/setup/     Algorithm-Switch, Presets, Slider, Sim-Tiefe, Run-Button
-components/results/   Ranking, Groups, Matches, Edge, Sensitivity, Germany, Home
+components/setup/     Algorithm-Switch (v1..v4), Presets, Slider, Run-Button
+components/results/   Ranking, Groups, Matches, Edge, Sensitivity, Germany,
+                      Home, Backtest
 components/ui/        Card, Button, Slider, InfoBanner, AlgorithmBadge
-lib/types/            TypeScript-Datenmodelle
-lib/data/             Teams (48), Schedule (72), Quoten, Presets, Faktoren
-lib/algorithms/       v1, v2, MonteCarlo, Sensitivity, Edge — pure Funktionen
-lib/workers/          simulation.worker.ts (Monte-Carlo + Sensitivity off-thread)
+lib/types/            TypeScript-Datenmodelle (team, match, factors,
+                      simulation, odds, edge, player, backtest)
+lib/data/             Teams (48), Schedule (72), Quoten, Presets, Faktoren,
+                      Player-Aggregates, historische WMs (2014/18/22)
+lib/algorithms/       v1, v2, v3, v4, MonteCarlo, Sensitivity, Edge, Metrics,
+                      Backtest, mlAggregator (ONNX-Loader)
+lib/workers/          simulation.worker.ts (off-thread für alle 4 Varianten)
 lib/hooks/            useRunSimulation, useRunSensitivity
 lib/stores/           Zustand-Store
-tests/                Vitest-Suites (62 grün)
-public/               manifest.json, icon.svg
+tests/                Vitest-Suites (98 grün)
+scripts/              train_aggregator.py (Python + XGBoost → ONNX)
+public/               manifest.json, icon.svg, models/ (für aggregator.onnx)
 ```
 
 ## Implementierungs-Phasen
 
-- **Phase 1 ✅** Skelett: 8 Stub-Routen, Phone-Frame, Bottom-Nav, Design-Tokens, Vitest-Pipeline.
-- **Phase 2 ✅** Algorithmen + Daten + Tests (1:1 aus HTML-Prototyp portiert, mit 62 Vitest-Tests abgesichert, Mulberry32 für Determinismus).
-- **Phase 3 ✅** UI tab-für-tab (Setup interaktiv, alle Result-Tabs mit Empty-State und Live-Daten aus dem Store, LoadingOverlay).
-- **Phase 4 ✅** PWA-Manifest + Icon, Apple-Touch-Icon, Polish.
-- **Phase 5 ✅** Web Worker für Monte-Carlo + Sensitivity (Main-Thread blockt nicht mehr bei 1M Sims).
+- **Phase 1 ✅** Skelett: 8 Stub-Routen, Phone-Frame, Bottom-Nav, Design-Tokens.
+- **Phase 2 ✅** Algorithmen + Daten + 62 Vitest-Tests; Mulberry32 Determinismus.
+- **Phase 3 ✅** UI tab-für-tab + Setup-Workflow + LoadingOverlay.
+- **Phase 4 ✅** PWA-Manifest + App-Icon.
+- **Phase 5 ✅** Web Worker für Monte-Carlo + Sensitivity.
+- **Phase 6 ✅** Historisches Backtesting (WMs 2014/18/22 + Brier/Log-Loss/RPS +
+  Reliability-Diagramm + `/backtest`-Tab).
+- **Phase 7 ✅** TIPS-26.3 Player-Aggregates (Top-11-Markt, Top-5-Liga, UCL,
+  Squad-xG/xGA, GK-PSxG) für alle 48 Teams.
+- **Phase 8 ✅** TIPS-26.4 Ensemble-Stacker (v1 + v2 + v3 mit
+  CV-kalibrierbaren Gewichten); ONNX-Schnittstelle steht; Python-Notebook für
+  XGBoost-Training + Export bereit.
+
+## Algorithmus-Varianten
+
+| Version | Kernidee                                                          | Voraussetzung           |
+| ------- | ----------------------------------------------------------------- | ----------------------- |
+| **v1**  | Linear gewichtete 9 Faktoren · additive Poisson                   | nichts                  |
+| **v2**  | + log-linear · Dixon-Coles · 70 / 30 Markt-Konsens-Blend          | + MARKT_QUOTEN          |
+| **v3**  | + Player-Composite (Markt₁₁, Top-5-Liga, UCL, xG, xGA, GK-PSxG)   | + PLAYER_AGGREGATES     |
+| **v4**  | Stacking: 0.15 v1 + 0.45 v2 + 0.40 v3 (CV-Default; ONNX folgt)    | + PLAYER_AGGREGATES     |
+
+Alle Varianten teilen sich denselben Monte-Carlo-Loop. Der Unterschied liegt
+ausschließlich in der Pre-Tournament-Stärke-Berechnung; das Match-Tor-Modell
+ist v1 (additive Poisson) oder v2 (log-linear + Dixon-Coles).
 
 ## Performance-Referenz
 
 Lokal mit Node 22:
 
-- TIPS-26.1 Classic: ~22 000 Sims/s
-- TIPS-26.2 Advanced: ~22 000 Sims/s
+- v1: ~22 000 Sims/s
+- v2: ~22 000 Sims/s
+- v3: ~22 000 Sims/s (+ einmaliger Composite-Compute)
+- v4: ~22 000 Sims/s (3 Stärke-Berechnungen einmalig, danach identisch)
 
-Im Browser ist die Geschwindigkeit ähnlich (JIT vergleichbar). Bei 1 000 000 Sims dauert die Simulation ~45 s — sie läuft im Worker, die UI bleibt scrollbar.
+Im Browser ist die Geschwindigkeit ähnlich (V8-JIT vergleichbar). Bei
+1 000 000 Sims dauert die Simulation ~45 s — sie läuft im Web Worker, die UI
+bleibt scrollbar.
 
-## Algorithmus-Architektur
+## Backtesting (Phase 6)
 
-Alle Algorithmen sind **pure Funktionen** mit pluggable `Rng`-Parameter:
+Auf `/backtest` validierst Du die Modelle gegen die echten K.o.-Phasen der
+letzten drei WMs:
 
-```ts
-export function poissonRandom(lambda: number, rng: Rng = defaultRng): number;
-```
+- Brier-Score (3-Outcome)
+- Log-Loss
+- Ranked Probability Score (RPS)
+- Argmax-Accuracy
+- Reliability-Diagramm
+- Per-Match Forecast vs Actual
 
-- **Production**: `defaultRng = Math.random`
-- **Tests**: `mulberry32(seed)` → 100 % reproduzierbar
+⚠️ Pre-Turnier-Snapshots sind Demo-Annäherungen aus öffentlich verfügbarem
+Wissen, keine exakten Stichtags-Werte (Roadmap §9.3).
 
-Das Tournament-Modell ist in vier Schichten getrennt:
+## ML-Aggregator (Phase 8)
 
-1. **normalize.ts** — Min-Max-Normalisierung [0, 1]
-2. **tips26v1.ts / tips26v2.ts** — Stärke-Berechnung + Match-Tor-Modell
-3. **knockout.ts** — Tie-Break via stärken-gewichteter Coin-Flip
-4. **monteCarlo.ts** — Turnier-Lauf (Gruppen-Round-Robin + 32er-K.o.)
-5. **sensitivity.ts** — 20 × 500 Perturbationen mit Quantilen
-6. **edgeAnalysis.ts** — Markt-Edge (echt) + Match-Edge (markt-konsistent abgeleitet)
+Der ML-Aggregator wird über `scripts/train_aggregator.py` offline trainiert
+(XGBoost, scikit-learn, ONNX-Export). Sobald das resultierende Modell unter
+`public/models/aggregator.onnx` liegt, lädt der Browser-Aggregator
+(`lib/algorithms/mlAggregator.ts`) es automatisch via `onnxruntime-web` und
+nutzt es für Match-Outcome-Inferenz.
 
-## Roadmap
+Bis dahin fällt TIPS-26.4 transparent auf den Ensemble-Stacker mit
+literatur-typischen Default-Gewichten (0.15 v1, 0.45 v2, 0.40 v3) zurück.
 
-Aus Spec §9, in der App noch nicht umgesetzt:
+## Roadmap (verbleibend)
 
-| Prio | Feature                         | Aufwand   |
-| ---- | ------------------------------- | --------- |
-| P0   | Backtesting (WMs 2014/18/22)    | Mittel    |
-| P0   | Brier / Log-Loss / RPS-Metriken | Mittel    |
-| P1   | Random Forest / XGBoost         | Hoch      |
-| P1   | Player-Level Features (xG etc.) | Mittel    |
-| P1   | Echte Match-Quoten via API      | Niedrig   |
-| P1   | Live-Update während Turnier     | Hoch      |
-| P2   | FIFA-konformes K.o.-Bracket     | Mittel    |
-| P2   | Tipprunden / Auth               | Hoch      |
-| P3   | Bayesian Hierarchical Model     | Hoch      |
+Aus Spec §9, noch nicht umgesetzt:
+
+| Prio | Feature                              | Aufwand   |
+| ---- | ------------------------------------ | --------- |
+| P1   | Echte Match-Quoten via The Odds API  | Niedrig   |
+| P1   | Live-Update während Turnier          | Hoch      |
+| P2   | FIFA-konformes K.o.-Bracket          | Mittel    |
+| P2   | Bivariate Poisson (exakt)            | Niedrig   |
+| P2   | Tipprunden + Auth                    | Hoch      |
+| P3   | Bayesian Hierarchical (PyMC)         | Hoch      |
+| —    | Echte historische Pre-Turnier-Daten  | Mittel    |
+| —    | Echte fbref/transfermarkt-Spielerdaten | Mittel  |

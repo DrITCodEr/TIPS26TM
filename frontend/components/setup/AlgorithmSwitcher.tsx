@@ -39,17 +39,26 @@ const ALGO_INFO: Record<
       "• GK Post-Shot xG Save %<br/>" +
       "Blending: 70 % v2 + 30 % Player-Composite. <strong>Daten sind Demo-Werte</strong> — echte fbref-/transfermarkt-Anbindung in Roadmap §9.2.",
   },
+  v4: {
+    title: "TIPS-26.4",
+    tag: "Ensemble",
+    desc: "Stacking v1 + v2 + v3 (XGBoost folgt)",
+    details:
+      "Ensemble-Stacking nach Stübinger et al. (2020) §9.13:<br/>" +
+      "<code>final = 0.15·v1 + 0.45·v2 + 0.40·v3</code><br/>" +
+      "Default-Gewichte aus Literatur. Werden später durch CV-optimierte Gewichte ersetzt, sobald das Python-Training-Skript (<code>scripts/train_aggregator.py</code>) ein .onnx-Modell exportiert. Der ONNX-Loader liegt unter <code>lib/algorithms/mlAggregator.ts</code> bereit — sobald <code>public/models/aggregator.onnx</code> existiert, wird XGBoost-Inferenz aktiv.",
+  },
 };
 
 export function AlgorithmSwitcher() {
   const algorithm = useSimulationStore((s) => s.algorithm);
   const setAlgorithm = useSimulationStore((s) => s.setAlgorithm);
 
-  const versions: AlgorithmVersion[] = ["v1", "v2", "v3"];
+  const versions: AlgorithmVersion[] = ["v1", "v2", "v3", "v4"];
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5">
         {versions.map((version) => {
           const info = ALGO_INFO[version];
           const active = algorithm === version;

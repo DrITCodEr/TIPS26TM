@@ -6,14 +6,24 @@ export function AlgorithmBadge() {
   const algorithm = useSimulationStore(
     (s) => s.simulationResult?.algorithm ?? s.algorithm,
   );
-  const isAdvanced = algorithm === "v2" || algorithm === "v3";
+  const isAdvanced =
+    algorithm === "v2" || algorithm === "v3" || algorithm === "v4";
   const label =
-    algorithm === "v3"
-      ? "TIPS-26.3 Player"
-      : algorithm === "v2"
-        ? "TIPS-26.2 Advanced"
-        : "TIPS-26.1 Classic";
-  const icon = algorithm === "v3" ? "🧬" : algorithm === "v2" ? "⚡" : "🧮";
+    algorithm === "v4"
+      ? "TIPS-26.4 Ensemble"
+      : algorithm === "v3"
+        ? "TIPS-26.3 Player"
+        : algorithm === "v2"
+          ? "TIPS-26.2 Advanced"
+          : "TIPS-26.1 Classic";
+  const icon =
+    algorithm === "v4"
+      ? "🎯"
+      : algorithm === "v3"
+        ? "🧬"
+        : algorithm === "v2"
+          ? "⚡"
+          : "🧮";
 
   return (
     <div

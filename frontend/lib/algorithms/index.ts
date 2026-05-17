@@ -11,6 +11,7 @@ import {
 } from "./tips26v1";
 import { calculateStrengths_v2, simulateMatch_v2 } from "./tips26v2";
 import { calculateStrengths_v3 } from "./tips26v3";
+import { calculateStrengths_v4 } from "./tips26v4";
 
 export function calculateStrengths(
   algorithm: AlgorithmVersion,
@@ -19,6 +20,14 @@ export function calculateStrengths(
   marktQuoten?: MarktQuoten,
   playerAggregates?: Record<string, PlayerAggregates>,
 ): number[] {
+  if (algorithm === "v4") {
+    if (!marktQuoten || !playerAggregates) {
+      throw new Error(
+        "TIPS-26.4 (v4) requires marktQuoten + playerAggregates.",
+      );
+    }
+    return calculateStrengths_v4(teams, weights, marktQuoten, playerAggregates);
+  }
   if (algorithm === "v3") {
     if (!marktQuoten || !playerAggregates) {
       throw new Error(
@@ -49,7 +58,7 @@ export function simulateMatch(
   sB: number,
   rng: Rng = defaultRng,
 ): MatchResult {
-  if (algorithm === "v2" || algorithm === "v3") {
+  if (algorithm === "v2" || algorithm === "v3" || algorithm === "v4") {
     return simulateMatch_v2(sA, sB, rng);
   }
   return simulateMatch_v1(sA, sB, rng);
@@ -60,6 +69,7 @@ export {
   calculateStrengths_v1,
   calculateStrengths_v2,
   calculateStrengths_v3,
+  calculateStrengths_v4,
   simulateMatch_v1,
   simulateMatch_v2,
 };
