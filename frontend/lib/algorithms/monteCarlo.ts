@@ -13,6 +13,8 @@ import type {
 import { calculateStrengths, simulateMatch } from "./index";
 import { simulateKnockout } from "./knockout";
 import { defaultRng, type Rng } from "./random";
+import { resolveR32, type QualifiedThird } from "./fifaBracket";
+import { R16_ROUND, QF_ROUND, SF_ROUND } from "@/lib/data/koBracket";
 
 interface GroupRecord {
   idx: number;
@@ -39,13 +41,95 @@ function createGroupRankStats(): GroupRankStats {
   return [0, 0, 0, 0];
 }
 
-function shuffleInPlace<T>(arr: T[], rng: Rng): void {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    const tmp = arr[i];
-    arr[i] = arr[j];
-    arr[j] = tmp;
+/**
+ * Spielt die K.o.-Runden nach der FIFA-2026-Bracket-Reihenfolge aus.
+ *
+ * Eingabe: 32 Team-Indizes in R32-Match-Reihenfolge (M1 = Slot 0/1,
+ * M2 = Slot 2/3, …). Jede Runde nutzt die Feeder-Indizes der nächsten
+ * Runde aus `koBracket.ts`.
+ *
+ * `reachedRound`-Konvention (kompatibel mit altem Code):
+ *   1 = R32 erreicht  · 2 = R16 erreicht  · 3 = QF erreicht
+ *   4 = SF erreicht   · 5 = Finale       · 6 = Weltmeister
+ */
+function playKnockoutBracket(
+  algorithm: AlgorithmVersion,
+  r32Slots: number[],
+  staerken: number[],
+  rng: Rng,
+): { champion: number; reachedRound: Record<number, number> } {
+  const reachedRound: Record<number, number> = {};
+  for (const idx of r32Slots) reachedRound[idx] = 1;
+
+  // R32 → 16 Sieger
+  const r32Winners = new Array<number>(16);
+  for (let m = 0; m < 16; m++) {
+    const winner = simulateKnockout(
+      algorithm,
+      r32Slots[m * 2],
+      r32Slots[m * 2 + 1],
+      staerken,
+      rng,
+    );
+    reachedRound[winner] = 2;
+    r32Winners[m] = winner;
   }
+
+  // R16 → 8 Sieger (Feeder aus R16_ROUND)
+  const r16Winners = new Array<number>(8);
+  for (let m = 0; m < R16_ROUND.feeders.length; m++) {
+    const [a, b] = R16_ROUND.feeders[m];
+    const winner = simulateKnockout(
+      algorithm,
+      r32Winners[a],
+      r32Winners[b],
+      staerken,
+      rng,
+    );
+    reachedRound[winner] = 3;
+    r16Winners[m] = winner;
+  }
+
+  // QF → 4 Sieger
+  const qfWinners = new Array<number>(4);
+  for (let m = 0; m < QF_ROUND.feeders.length; m++) {
+    const [a, b] = QF_ROUND.feeders[m];
+    const winner = simulateKnockout(
+      algorithm,
+      r16Winners[a],
+      r16Winners[b],
+      staerken,
+      rng,
+    );
+    reachedRound[winner] = 4;
+    qfWinners[m] = winner;
+  }
+
+  // SF → 2 Sieger
+  const sfWinners = new Array<number>(2);
+  for (let m = 0; m < SF_ROUND.feeders.length; m++) {
+    const [a, b] = SF_ROUND.feeders[m];
+    const winner = simulateKnockout(
+      algorithm,
+      qfWinners[a],
+      qfWinners[b],
+      staerken,
+      rng,
+    );
+    reachedRound[winner] = 5;
+    sfWinners[m] = winner;
+  }
+
+  // Finale
+  const champion = simulateKnockout(
+    algorithm,
+    sfWinners[0],
+    sfWinners[1],
+    staerken,
+    rng,
+  );
+  reachedRound[champion] = 6;
+  return { champion, reachedRound };
 }
 
 /**
@@ -118,7 +202,10 @@ export function simulateOneTournament(args: {
     }
   }
 
-  const qualifiziert: number[] = [];
+  const groupSorted: Record<GroupName, number[]> = {} as Record<
+    GroupName,
+    number[]
+  >;
   const dritte: GroupRecord[] = [];
 
   for (const g of Object.keys(groups) as GroupName[]) {
@@ -129,43 +216,35 @@ export function simulateOneTournament(args: {
     for (let pos = 0; pos < sorted.length; pos++) {
       groupRankStats[sorted[pos].idx][pos]++;
     }
-    qualifiziert.push(sorted[0].idx, sorted[1].idx);
+    groupSorted[g] = sorted.map((r) => r.idx);
     dritte.push(sorted[2]);
   }
 
+  // 8 beste Dritte qualifizieren
   dritte.sort(
     (a, b) =>
       b.pkt - a.pkt || b.td - a.td || b.tore - a.tore || rng() - 0.5,
   );
-  for (let i = 0; i < 8; i++) qualifiziert.push(dritte[i].idx);
+  const bestThirds: QualifiedThird[] = dritte.slice(0, 8).map((r) => ({
+    idx: r.idx,
+    group: teams[r.idx].group,
+  }));
 
-  // === K.o.-Phase ===
-  // Vorläufiges Bracket: zufällige Permutation der 32 Qualifizierten.
-  // Echtes FIFA-Bracket-Mapping → Roadmap (Spec §12.3).
-  shuffleInPlace(qualifiziert, rng);
-
-  const reachedRound: Record<number, number> = {};
-  for (const idx of qualifiziert) reachedRound[idx] = 1;
-
-  let runde = qualifiziert;
-  let stufe = 1;
-  while (runde.length > 1) {
-    stufe++;
-    const naechste: number[] = new Array(runde.length / 2);
-    for (let i = 0; i < runde.length; i += 2) {
-      const sieger = simulateKnockout(
-        algorithm,
-        runde[i],
-        runde[i + 1],
-        staerken,
-        rng,
-      );
-      naechste[i / 2] = sieger;
-      reachedRound[sieger] = stufe;
-    }
-    runde = naechste;
+  // === K.o.-Phase (FIFA-2026-Bracket) ===
+  const { matches: r32Pairs } = resolveR32(groupSorted, bestThirds);
+  // Flach in 32-Slot-Reihenfolge: M1 = Slot 0/1, M2 = Slot 2/3, …
+  const r32Slots = new Array<number>(32);
+  for (let m = 0; m < 16; m++) {
+    r32Slots[m * 2] = r32Pairs[m][0];
+    r32Slots[m * 2 + 1] = r32Pairs[m][1];
   }
-  const champion = runde[0];
+
+  const { champion, reachedRound } = playKnockoutBracket(
+    algorithm,
+    r32Slots,
+    staerken,
+    rng,
+  );
 
   // Akkumuliere Team-Stats auf Basis der erreichten Runde
   for (const k of Object.keys(reachedRound)) {
