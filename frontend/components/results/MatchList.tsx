@@ -95,6 +95,19 @@ export function MatchList() {
               const avgB = (ms.goalsB / N).toFixed(1);
               const avgTotal = ((ms.goalsA + ms.goalsB) / N).toFixed(1);
 
+              // Tail-Indikator: wie oft gibt es mindestens 4 / 6 Tore insgesamt?
+              let countGe4 = 0;
+              let countGe6 = 0;
+              for (const k of Object.keys(ms.scores)) {
+                const [ga, gb] = k.split("-").map(Number);
+                const tot = ga + gb;
+                const c = ms.scores[k];
+                if (tot >= 4) countGe4 += c;
+                if (tot >= 6) countGe6 += c;
+              }
+              const pctGe4 = ((countGe4 / N) * 100).toFixed(0);
+              const pctGe6 = ((countGe6 / N) * 100).toFixed(0);
+
               const topScores = Object.entries(ms.scores)
                 .map(([k, v]) => ({ k, v }))
                 .sort((a, b) => b.v - a.v)
@@ -182,7 +195,14 @@ export function MatchList() {
                       <strong style={{ color: "var(--text-primary)" }}>
                         {avgA}:{avgB}
                       </strong>{" "}
-                      ({avgTotal} Tore)
+                      ({avgTotal} Tore) ·{" "}
+                      <span style={{ color: "var(--mint)" }}>≥4: {pctGe4}%</span>
+                      {Number(pctGe6) > 0 && (
+                        <>
+                          {" · "}
+                          <span style={{ color: "var(--mint)" }}>≥6: {pctGe6}%</span>
+                        </>
+                      )}
                     </span>
                     <div className="flex gap-1 flex-wrap justify-end">
                       {topScores.map(({ k, v }) => (

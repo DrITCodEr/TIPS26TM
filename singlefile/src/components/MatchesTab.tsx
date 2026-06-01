@@ -62,6 +62,17 @@ export function MatchesTab({ nav }: { nav: (t: Tab) => void }) {
             const avgA = (ms.goalsA / N).toFixed(1);
             const avgB = (ms.goalsB / N).toFixed(1);
             const avgTotal = ((ms.goalsA + ms.goalsB) / N).toFixed(1);
+            let countGe4 = 0;
+            let countGe6 = 0;
+            for (const k of Object.keys(ms.scores)) {
+              const [ga, gb] = k.split("-").map(Number);
+              const tot = ga + gb;
+              const c = ms.scores[k];
+              if (tot >= 4) countGe4 += c;
+              if (tot >= 6) countGe6 += c;
+            }
+            const pctGe4 = ((countGe4 / N) * 100).toFixed(0);
+            const pctGe6 = ((countGe6 / N) * 100).toFixed(0);
             const top = Object.entries(ms.scores).map(([k, v]) => ({ k, v })).sort((a, b) => b.v - a.v).slice(0, 6);
             const tA = TEAMS[m.idxA!];
             const tB = TEAMS[m.idxB!];
@@ -97,7 +108,14 @@ export function MatchesTab({ nav }: { nav: (t: Tab) => void }) {
                   <span>
                     ⌀{" "}
                     <strong style={{ color: "var(--text-primary)" }}>{avgA}:{avgB}</strong>
-                    {" "}({avgTotal} Tore)
+                    {" "}({avgTotal} Tore) ·{" "}
+                    <span style={{ color: "var(--mint)" }}>≥4: {pctGe4}%</span>
+                    {Number(pctGe6) > 0 && (
+                      <>
+                        {" · "}
+                        <span style={{ color: "var(--mint)" }}>≥6: {pctGe6}%</span>
+                      </>
+                    )}
                   </span>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
                     {top.map((t) => (
