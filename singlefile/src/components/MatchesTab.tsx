@@ -61,7 +61,8 @@ export function MatchesTab({ nav }: { nav: (t: Tab) => void }) {
             const winB = (ms.winB / N) * 100;
             const avgA = (ms.goalsA / N).toFixed(1);
             const avgB = (ms.goalsB / N).toFixed(1);
-            const top = Object.entries(ms.scores).map(([k, v]) => ({ k, v })).sort((a, b) => b.v - a.v).slice(0, 4);
+            const avgTotal = ((ms.goalsA + ms.goalsB) / N).toFixed(1);
+            const top = Object.entries(ms.scores).map(([k, v]) => ({ k, v })).sort((a, b) => b.v - a.v).slice(0, 6);
             const tA = TEAMS[m.idxA!];
             const tB = TEAMS[m.idxB!];
             const isG = m.teamA === "Deutschland" || m.teamB === "Deutschland";
@@ -94,8 +95,9 @@ export function MatchesTab({ nav }: { nav: (t: Tab) => void }) {
                 </div>
                 <div className="match-footer">
                   <span>
-                    ⌀ Tore:{" "}
-                    <strong style={{ color: "var(--text-primary)" }}>{avgA} : {avgB}</strong>
+                    ⌀{" "}
+                    <strong style={{ color: "var(--text-primary)" }}>{avgA}:{avgB}</strong>
+                    {" "}({avgTotal} Tore)
                   </span>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
                     {top.map((t) => (

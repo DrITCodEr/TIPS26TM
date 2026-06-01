@@ -93,11 +93,12 @@ export function MatchList() {
               const winB = (ms.winB / N) * 100;
               const avgA = (ms.goalsA / N).toFixed(1);
               const avgB = (ms.goalsB / N).toFixed(1);
+              const avgTotal = ((ms.goalsA + ms.goalsB) / N).toFixed(1);
 
               const topScores = Object.entries(ms.scores)
                 .map(([k, v]) => ({ k, v }))
                 .sort((a, b) => b.v - a.v)
-                .slice(0, 4);
+                .slice(0, 6);
 
               const tA = TEAMS[m.idxA!];
               const tB = TEAMS[m.idxB!];
@@ -177,10 +178,11 @@ export function MatchList() {
                     }}
                   >
                     <span>
-                      ⌀ Tore:{" "}
+                      ⌀{" "}
                       <strong style={{ color: "var(--text-primary)" }}>
-                        {avgA} : {avgB}
-                      </strong>
+                        {avgA}:{avgB}
+                      </strong>{" "}
+                      ({avgTotal} Tore)
                     </span>
                     <div className="flex gap-1 flex-wrap justify-end">
                       {topScores.map(({ k, v }) => (

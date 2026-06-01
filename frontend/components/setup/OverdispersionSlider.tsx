@@ -17,12 +17,13 @@ export function OverdispersionSlider() {
   const value = useSimulationStore((s) => s.dispersionPercent);
   const setValue = useSimulationStore((s) => s.setDispersionPercent);
 
-  const phi = ((value / 100) * 0.4).toFixed(2);
-  let hint = "Reine Poisson — Tore eng um λ verteilt.";
+  const phi = ((value / 100) * 1.5).toFixed(2);
+  let hint = "Reine Poisson — Tore eng um λ verteilt, kaum 5+ Tor-Spiele.";
   if (value > 0 && value <= 20) hint = "Leicht überdispers — etwas mehr 3:1, 4:1.";
-  else if (value <= 50) hint = "Empirisch passend — 4:1 / 5:1 kommen vor.";
-  else if (value <= 80) hint = "Hoch — 5:0, 6:0, gelegentlich auch 7:1.";
-  else if (value > 80) hint = "Stark — fast jedes Turnier hat ein Torfestival.";
+  else if (value <= 40) hint = "Empirisch passend (φ≈0.5) — 4:1 / 5:1 kommen häufig vor.";
+  else if (value <= 60) hint = "Spürbar — 5:0, 6:1, 4:3 keine Seltenheit.";
+  else if (value <= 80) hint = "Hoch — gelegentlich 7:1 oder 6:0.";
+  else hint = "Extrem — Torfestivals + 0:0-Defensiv-Festungen häufig nebeneinander.";
 
   return (
     <Card>

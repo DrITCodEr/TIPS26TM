@@ -88,7 +88,7 @@ export function useRunSimulation() {
         weights: store.weights,
         numSimulations: N,
         surpriseSigma: (store.surprisePercent / 100) * 0.3,
-        dispersion: (store.dispersionPercent / 100) * 0.4,
+        dispersion: (store.dispersionPercent / 100) * 1.5,
         dfbAlwaysWins: store.dfbAlwaysWins,
       };
       worker.postMessage(req);
@@ -167,7 +167,7 @@ export function useRunSensitivity() {
         numPerturbations: N_PERT,
         numSubSimulations: N_SUB,
         surpriseSigma: (store.surprisePercent / 100) * 0.3,
-        dispersion: (store.dispersionPercent / 100) * 0.4,
+        dispersion: (store.dispersionPercent / 100) * 1.5,
         dfbAlwaysWins: store.dfbAlwaysWins,
       };
       worker.postMessage(req);
