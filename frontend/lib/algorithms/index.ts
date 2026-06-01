@@ -62,7 +62,12 @@ export function calculateStrengths(
  *
  * `surpriseSigma` ∈ [0, 0.30]: optionale Tagesform-Streuung. Wenn > 0,
  * werden beide Stärken pro Match mit einem unabhängigen Uniform-Noise
- * (1 ± sigma) multipliziert — orthogonal zur Algorithmus-Wahl. Default 0.
+ * (1 ± sigma) multipliziert — orthogonal zur Algorithmus-Wahl.
+ *
+ * `dispersion` ∈ [0, 0.40]: optionale Negativ-Binomial-Overdispersion für
+ * das Tor-Sampling. Wenn > 0, werden Tore aus Gamma-Poisson-Mischung statt
+ * reiner Poisson gezogen — mehr „Burst"-Spiele (5:0, 7:1). Auch orthogonal.
+ * Beide Defaults 0 → bit-identische Backward-Kompatibilität.
  */
 export function simulateMatch(
   algorithm: AlgorithmVersion,
@@ -70,6 +75,7 @@ export function simulateMatch(
   sB: number,
   rng: Rng = defaultRng,
   surpriseSigma = 0,
+  dispersion = 0,
 ): MatchResult {
   let effA = sA;
   let effB = sB;
@@ -77,11 +83,11 @@ export function simulateMatch(
     effA = sA * (1 + (rng() * 2 - 1) * surpriseSigma);
     effB = sB * (1 + (rng() * 2 - 1) * surpriseSigma);
   }
-  if (algorithm === "v5") return simulateMatch_v5(effA, effB, rng);
+  if (algorithm === "v5") return simulateMatch_v5(effA, effB, rng, dispersion);
   if (algorithm === "v2" || algorithm === "v3" || algorithm === "v4") {
-    return simulateMatch_v2(effA, effB, rng);
+    return simulateMatch_v2(effA, effB, rng, dispersion);
   }
-  return simulateMatch_v1(effA, effB, rng);
+  return simulateMatch_v1(effA, effB, rng, dispersion);
 }
 
 export type { MatchResult };

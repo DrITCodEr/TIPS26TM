@@ -2,7 +2,7 @@ import type { Team } from "@/lib/types/team";
 import type { FactorWeights } from "@/lib/types/factors";
 import { FAKTOREN } from "@/lib/data/factors";
 import { normalizeFactor } from "./normalize";
-import { poissonRandom } from "./poisson";
+import { negBinomialRandom } from "./poisson";
 import { defaultRng, type Rng } from "./random";
 
 export interface MatchResult {
@@ -51,16 +51,21 @@ export function calculateStrengths_v1(
  * `max(0.1, …)` verhindert unphysikalische negative λ — siehe v2 für die saubere
  * log-lineare Variante.
  */
+/**
+ * `dispersion` ≥ 0: Overdispersion-Parameter φ für Negativ-Binomial-Sampling.
+ * 0 = reine Poisson (Backward-kompatibel). 0.3 = deutlich „Burst"-Spiele.
+ */
 export function simulateMatch_v1(
   sA: number,
   sB: number,
   rng: Rng = defaultRng,
+  dispersion = 0,
 ): MatchResult {
   const diff = sA - sB;
   const lambdaA = Math.max(0.1, 1.4 + diff * 3.5);
   const lambdaB = Math.max(0.1, 1.4 - diff * 3.5);
   return {
-    toreA: poissonRandom(lambdaA, rng),
-    toreB: poissonRandom(lambdaB, rng),
+    toreA: negBinomialRandom(lambdaA, dispersion, rng),
+    toreB: negBinomialRandom(lambdaB, dispersion, rng),
   };
 }

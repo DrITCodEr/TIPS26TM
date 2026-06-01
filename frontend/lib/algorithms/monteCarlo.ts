@@ -58,6 +58,7 @@ function playKnockoutBracket(
   staerken: number[],
   rng: Rng,
   surpriseSigma: number,
+  dispersion: number,
 ): { champion: number; reachedRound: Record<number, number> } {
   const reachedRound: Record<number, number> = {};
   for (const idx of r32Slots) reachedRound[idx] = 1;
@@ -72,6 +73,7 @@ function playKnockoutBracket(
       staerken,
       rng,
       surpriseSigma,
+      dispersion,
     );
     reachedRound[winner] = 2;
     r32Winners[m] = winner;
@@ -88,6 +90,7 @@ function playKnockoutBracket(
       staerken,
       rng,
       surpriseSigma,
+      dispersion,
     );
     reachedRound[winner] = 3;
     r16Winners[m] = winner;
@@ -104,6 +107,7 @@ function playKnockoutBracket(
       staerken,
       rng,
       surpriseSigma,
+      dispersion,
     );
     reachedRound[winner] = 4;
     qfWinners[m] = winner;
@@ -120,6 +124,7 @@ function playKnockoutBracket(
       staerken,
       rng,
       surpriseSigma,
+      dispersion,
     );
     reachedRound[winner] = 5;
     sfWinners[m] = winner;
@@ -155,6 +160,7 @@ export function simulateOneTournament(args: {
   matchStats: MatchStats[];
   groupRankStats: GroupRankStats[];
   surpriseSigma?: number;
+  dispersion?: number;
 }): TournamentOutcome {
   const {
     algorithm,
@@ -166,6 +172,7 @@ export function simulateOneTournament(args: {
     matchStats,
     groupRankStats,
     surpriseSigma = 0,
+    dispersion = 0,
   } = args;
 
   // === Gruppenphase ===
@@ -189,6 +196,7 @@ export function simulateOneTournament(args: {
       staerken[b],
       rng,
       surpriseSigma,
+      dispersion,
     );
 
     const ms = matchStats[mi];
@@ -259,6 +267,7 @@ export function simulateOneTournament(args: {
     staerken,
     rng,
     surpriseSigma,
+    dispersion,
   );
 
   // Akkumuliere Team-Stats auf Basis der erreichten Runde
@@ -289,6 +298,12 @@ export interface MonteCarloConfig {
    * UI nutzt 0..0.30 als Skala (entspricht 0..100 % „Surprise"-Slider).
    */
   surpriseSigma?: number;
+  /**
+   * Overdispersion-Parameter φ für Negativ-Binomial-Tor-Sampling.
+   * 0 = reine Poisson. 0.40 = stark überdispers (häufig 5:0, 7:1).
+   * UI-Slider 0..100 % entspricht 0..0.40.
+   */
+  dispersion?: number;
   rng?: Rng;
   /** Wird ~100x pro Run aufgerufen mit progress ∈ [0, 1]. */
   onProgress?: (progress: number) => void;
@@ -311,6 +326,7 @@ export async function runMonteCarlo(
     marktQuoten,
     playerAggregates,
     surpriseSigma = 0,
+    dispersion = 0,
     rng = defaultRng,
     onProgress,
   } = config;
@@ -347,6 +363,7 @@ export async function runMonteCarlo(
         matchStats,
         groupRankStats,
         surpriseSigma,
+        dispersion,
       });
     }
     done += batchSize;

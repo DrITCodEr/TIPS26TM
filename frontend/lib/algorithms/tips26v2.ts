@@ -4,7 +4,7 @@ import type { MarktQuoten } from "@/lib/types/odds";
 import { FAKTOREN } from "@/lib/data/factors";
 import { MARKT_MARGIN } from "@/lib/data/marktQuoten";
 import { normalizeFactor } from "./normalize";
-import { poissonRandom } from "./poisson";
+import { negBinomialRandom } from "./poisson";
 import { defaultRng, type Rng } from "./random";
 import type { MatchResult } from "./tips26v1";
 
@@ -114,17 +114,22 @@ export function calculateStrengths_v2(
  * Wahrscheinlichkeit von (0,0), (1,0), (0,1) hin zu (1,1) — empirisch sind
  * Unentschieden häufiger als reines Poisson vorhersagt.
  */
+/**
+ * `dispersion` ≥ 0: Overdispersion φ. 0 = reine Poisson (Backward-kompatibel),
+ * >0 = Negativ-Binomial-Tore mit Var = λ(1+φ).
+ */
 export function simulateMatch_v2(
   sA: number,
   sB: number,
   rng: Rng = defaultRng,
+  dispersion = 0,
 ): MatchResult {
   const diff = sA - sB;
   const lambdaA = Math.exp(0.336 + diff * 0.9);
   const lambdaB = Math.exp(0.336 - diff * 0.9);
 
-  let toreA = poissonRandom(lambdaA, rng);
-  let toreB = poissonRandom(lambdaB, rng);
+  let toreA = negBinomialRandom(lambdaA, dispersion, rng);
+  let toreB = negBinomialRandom(lambdaB, dispersion, rng);
 
   if (toreA === 0 && toreB === 0) {
     if (rng() < 0.1) {

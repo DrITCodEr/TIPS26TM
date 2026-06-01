@@ -229,6 +229,52 @@ function SurpriseSlider() {
   );
 }
 
+function OverdispersionSlider() {
+  const value = useStore((s) => s.dispersionPercent);
+  const setValue = useStore((s) => s.setDispersionPercent);
+  const phi = ((value / 100) * 0.4).toFixed(2);
+  let hint = "Reine Poisson — Tore eng um λ verteilt.";
+  if (value > 0 && value <= 20) hint = "Leicht überdispers — etwas mehr 3:1, 4:1.";
+  else if (value <= 50) hint = "Empirisch passend — 4:1 / 5:1 kommen vor.";
+  else if (value <= 80) hint = "Hoch — 5:0, 6:0, gelegentlich auch 7:1.";
+  else if (value > 80) hint = "Stark — fast jedes Turnier hat ein Torfestival.";
+
+  return (
+    <Card>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 15 }}>⚡</span> Tor-Streuung
+          </div>
+          <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
+            Wie oft fallen ungewöhnlich viele Tore?
+          </div>
+        </div>
+        <div className="slider-value-pill" style={{ fontSize: 14, padding: "6px 12px" }}>{value}%</div>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={5}
+        value={value}
+        onChange={(e) => setValue(Number(e.target.value))}
+        className="tips-range"
+        style={{ "--val": `${value}%` } as CSSProperties}
+      />
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)" }}>
+        <span>0 % (Poisson)</span><span>50 %</span><span>100 % (Burst)</span>
+      </div>
+      <div style={{ marginTop: 12, fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+        {hint}{" "}
+        <span style={{ color: "var(--text-tertiary)" }}>
+          (Overdispersion φ = {phi})
+        </span>
+      </div>
+    </Card>
+  );
+}
+
 export function SetupTab({ onSimulationDone }: { onSimulationDone: () => void }) {
   const idx = useStore((s) => s.numSimulationsIdx);
   const loading = useStore((s) => s.loading.kind);
@@ -255,6 +301,9 @@ export function SetupTab({ onSimulationDone }: { onSimulationDone: () => void })
 
       <SectionTitle>🎰 Überraschungs-Faktor</SectionTitle>
       <SurpriseSlider />
+
+      <SectionTitle>⚡ Tor-Streuung</SectionTitle>
+      <OverdispersionSlider />
 
       <div className="sim-controls">
         <Button variant="primary" full disabled={loading !== null} onClick={run}>

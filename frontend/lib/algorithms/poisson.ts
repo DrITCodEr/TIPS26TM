@@ -1,4 +1,4 @@
-import { defaultRng, type Rng } from "./random";
+import { defaultRng, sampleGamma, type Rng } from "./random";
 
 /**
  * Knuth-Algorithmus für Poisson-Sampling.
@@ -14,6 +14,27 @@ export function poissonRandom(lambda: number, rng: Rng = defaultRng): number {
     p *= rng();
   } while (p > L && k < 12);
   return k - 1;
+}
+
+/**
+ * Negativ-Binomial-Tor-Sampling als Gamma-Poisson-Mischung.
+ *
+ *   Λ ~ Gamma(shape = λ/φ, scale = φ)   →  E[Λ] = λ, Var[Λ] = λ·φ
+ *   X ~ Poisson(Λ)                       →  E[X] = λ, Var[X] = λ(1 + φ)
+ *
+ * `dispersion` = φ ≥ 0. Bei φ = 0 → exakt poissonRandom (Var = λ).
+ * Empirisch passt φ ≈ 0.10 – 0.25 für internationale Fußball-Matches und
+ * gibt der Verteilung den realistischen „Burst"-Tail, der 4:1, 5:0, 7:1
+ * gelegentlich vorkommen lässt.
+ */
+export function negBinomialRandom(
+  lambda: number,
+  dispersion: number,
+  rng: Rng = defaultRng,
+): number {
+  if (dispersion <= 0 || lambda <= 0) return poissonRandom(lambda, rng);
+  const lambdaStar = sampleGamma(lambda / dispersion, dispersion, rng);
+  return poissonRandom(lambdaStar, rng);
 }
 
 /**

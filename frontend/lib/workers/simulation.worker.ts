@@ -27,6 +27,7 @@ self.addEventListener("message", async (e: MessageEvent<WorkerRequest>) => {
         marktQuoten: MARKT_QUOTEN,
         playerAggregates: PLAYER_AGGREGATES,
         surpriseSigma: req.surpriseSigma ?? 0,
+        dispersion: req.dispersion ?? 0,
         onProgress: (value) => post({ type: "progress", value }),
       });
       post({ type: "simulationResult", value: result });
@@ -42,6 +43,7 @@ self.addEventListener("message", async (e: MessageEvent<WorkerRequest>) => {
         marktQuoten: MARKT_QUOTEN,
         playerAggregates: PLAYER_AGGREGATES,
         surpriseSigma: req.surpriseSigma ?? 0,
+        dispersion: req.dispersion ?? 0,
         onProgress: (value) => post({ type: "progress", value }),
       });
       post({ type: "sensitivityResult", value: result });

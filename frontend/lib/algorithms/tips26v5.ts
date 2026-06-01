@@ -24,9 +24,10 @@ export function simulateMatch_v5(
   sA: number,
   sB: number,
   rng: Rng = defaultRng,
+  dispersion = 0,
 ): MatchResult {
   const diff = sA - sB;
   const lambdaA = Math.exp(0.336 + diff * 0.9);
   const lambdaB = Math.exp(0.336 - diff * 0.9);
-  return sampleBivariatePoisson(lambdaA, lambdaB, DEFAULT_LAMBDA3, rng);
+  return sampleBivariatePoisson(lambdaA, lambdaB, DEFAULT_LAMBDA3, rng, dispersion);
 }

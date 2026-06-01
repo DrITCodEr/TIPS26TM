@@ -40,6 +40,7 @@ export interface SensitivityConfig {
   marktQuoten?: MarktQuoten;
   playerAggregates?: Record<string, PlayerAggregates>;
   surpriseSigma?: number;
+  dispersion?: number;
   rng?: Rng;
   onProgress?: (progress: number) => void;
 }
@@ -92,6 +93,7 @@ export async function runSensitivity(
     marktQuoten,
     playerAggregates,
     surpriseSigma = 0,
+    dispersion = 0,
     rng = defaultRng,
     onProgress,
   } = config;
@@ -140,6 +142,7 @@ export async function runSensitivity(
         matchStats,
         groupRankStats,
         surpriseSigma,
+        dispersion,
       });
     }
 

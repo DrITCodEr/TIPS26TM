@@ -11,6 +11,7 @@ export interface SimulateRequest {
   weights: FactorWeights;
   numSimulations: number;
   surpriseSigma?: number;
+  dispersion?: number;
 }
 
 export interface SensitivityRequest {
@@ -21,6 +22,7 @@ export interface SensitivityRequest {
   numPerturbations: number;
   numSubSimulations: number;
   surpriseSigma?: number;
+  dispersion?: number;
 }
 
 export type WorkerRequest = SimulateRequest | SensitivityRequest;

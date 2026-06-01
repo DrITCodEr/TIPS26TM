@@ -57,6 +57,7 @@ export function useRunSimulation(onDone?: () => void) {
       marktQuoten: MARKT_QUOTEN,
       playerAggregates: PLAYER_AGGREGATES,
       surpriseSigma: (s.surprisePercent / 100) * 0.3,
+      dispersion: (s.dispersionPercent / 100) * 0.4,
       onProgress: (p) => {
         const done = Math.round(p * N);
         const now = Date.now();
@@ -116,6 +117,7 @@ export function useRunSensitivity() {
       marktQuoten: MARKT_QUOTEN,
       playerAggregates: PLAYER_AGGREGATES,
       surpriseSigma: (s.surprisePercent / 100) * 0.3,
+      dispersion: (s.dispersionPercent / 100) * 0.4,
       onProgress: (p) => {
         const done = Math.round(p * N_PERT);
         const now = Date.now();

@@ -19,6 +19,7 @@ export function simulateKnockout(
   staerken: number[],
   rng: Rng = defaultRng,
   surpriseSigma = 0,
+  dispersion = 0,
 ): number {
   const result = simulateMatch(
     algorithm,
@@ -26,6 +27,7 @@ export function simulateKnockout(
     staerken[idxB],
     rng,
     surpriseSigma,
+    dispersion,
   );
   if (result.toreA > result.toreB) return idxA;
   if (result.toreB > result.toreA) return idxB;

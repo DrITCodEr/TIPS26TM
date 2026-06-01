@@ -29,6 +29,8 @@ interface SimulationStore {
   sensRangePercent: 15 | 30 | 50;
   /** 0..100 ; 0 = deterministisch, 100 = ±30 % Tagesform-Streuung pro Match */
   surprisePercent: number;
+  /** 0..100 ; 0 = reine Poisson-Tore, 100 = stark überdispers (häufiger 4:1, 5:0, 7:1) */
+  dispersionPercent: number;
 
   // Ergebnisse
   simulationResult: SimulationResult | null;
@@ -45,6 +47,7 @@ interface SimulationStore {
   setNumSimulationsIdx: (idx: number) => void;
   setSensRangePercent: (p: 15 | 30 | 50) => void;
   setSurprisePercent: (p: number) => void;
+  setDispersionPercent: (p: number) => void;
   setSimulationResult: (r: SimulationResult | null) => void;
   setSensitivityResult: (r: SensitivityResult | null) => void;
   setSimState: (s: SimState) => void;
@@ -66,6 +69,7 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
   numSimulationsIdx: 2, // 5.000
   sensRangePercent: 30,
   surprisePercent: 0,
+  dispersionPercent: 0,
 
   simulationResult: null,
   sensitivityResult: null,
@@ -90,6 +94,9 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
 
   setSurprisePercent: (p) =>
     set({ surprisePercent: Math.max(0, Math.min(100, Math.round(p))) }),
+
+  setDispersionPercent: (p) =>
+    set({ dispersionPercent: Math.max(0, Math.min(100, Math.round(p))) }),
 
   setSimulationResult: (r) => set({ simulationResult: r }),
   setSensitivityResult: (r) => set({ sensitivityResult: r }),

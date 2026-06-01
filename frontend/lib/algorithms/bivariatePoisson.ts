@@ -1,5 +1,5 @@
 import { defaultRng, type Rng } from "./random";
-import { poissonRandom } from "./poisson";
+import { negBinomialRandom } from "./poisson";
 import type { MatchResult } from "./tips26v1";
 
 /**
@@ -33,6 +33,7 @@ export function sampleBivariatePoisson(
   lambdaB_total: number,
   lambda3: number = DEFAULT_LAMBDA3,
   rng: Rng = defaultRng,
+  dispersion = 0,
 ): MatchResult {
   // λ_3 darf nicht größer als min(λ_A, λ_B) sein, sonst gehen die
   // unabhängigen Anteile ins Negative. Clip auf 95 % des Minimums.
@@ -43,9 +44,10 @@ export function sampleBivariatePoisson(
   const lambda1 = Math.max(0.01, lambdaA_total - lambda3Effective);
   const lambda2 = Math.max(0.01, lambdaB_total - lambda3Effective);
 
-  const x3 = poissonRandom(lambda3Effective, rng);
+  // Negativ-Binomial wenn dispersion>0, sonst Backward-kompatibel Poisson.
+  const x3 = negBinomialRandom(lambda3Effective, dispersion, rng);
   return {
-    toreA: poissonRandom(lambda1, rng) + x3,
-    toreB: poissonRandom(lambda2, rng) + x3,
+    toreA: negBinomialRandom(lambda1, dispersion, rng) + x3,
+    toreB: negBinomialRandom(lambda2, dispersion, rng) + x3,
   };
 }
