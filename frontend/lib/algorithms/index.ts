@@ -59,18 +59,29 @@ export function calculateStrengths(
  *
  * v3/v4 reuse das v2-Tor-Modell — das Player-/Ensemble-Signal wirkt
  * ausschließlich über die Pre-Tournament-Stärke.
+ *
+ * `surpriseSigma` ∈ [0, 0.30]: optionale Tagesform-Streuung. Wenn > 0,
+ * werden beide Stärken pro Match mit einem unabhängigen Uniform-Noise
+ * (1 ± sigma) multipliziert — orthogonal zur Algorithmus-Wahl. Default 0.
  */
 export function simulateMatch(
   algorithm: AlgorithmVersion,
   sA: number,
   sB: number,
   rng: Rng = defaultRng,
+  surpriseSigma = 0,
 ): MatchResult {
-  if (algorithm === "v5") return simulateMatch_v5(sA, sB, rng);
-  if (algorithm === "v2" || algorithm === "v3" || algorithm === "v4") {
-    return simulateMatch_v2(sA, sB, rng);
+  let effA = sA;
+  let effB = sB;
+  if (surpriseSigma > 0) {
+    effA = sA * (1 + (rng() * 2 - 1) * surpriseSigma);
+    effB = sB * (1 + (rng() * 2 - 1) * surpriseSigma);
   }
-  return simulateMatch_v1(sA, sB, rng);
+  if (algorithm === "v5") return simulateMatch_v5(effA, effB, rng);
+  if (algorithm === "v2" || algorithm === "v3" || algorithm === "v4") {
+    return simulateMatch_v2(effA, effB, rng);
+  }
+  return simulateMatch_v1(effA, effB, rng);
 }
 
 export type { MatchResult };

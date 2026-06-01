@@ -10,6 +10,7 @@ export interface SimulateRequest {
   algorithm: AlgorithmVersion;
   weights: FactorWeights;
   numSimulations: number;
+  surpriseSigma?: number;
 }
 
 export interface SensitivityRequest {
@@ -19,6 +20,7 @@ export interface SensitivityRequest {
   rangePercent: 15 | 30 | 50;
   numPerturbations: number;
   numSubSimulations: number;
+  surpriseSigma?: number;
 }
 
 export type WorkerRequest = SimulateRequest | SensitivityRequest;

@@ -87,6 +87,7 @@ export function useRunSimulation() {
         algorithm: store.algorithm,
         weights: store.weights,
         numSimulations: N,
+        surpriseSigma: (store.surprisePercent / 100) * 0.3,
       };
       worker.postMessage(req);
     }).finally(() => worker.terminate());
@@ -163,6 +164,7 @@ export function useRunSensitivity() {
         rangePercent: store.sensRangePercent,
         numPerturbations: N_PERT,
         numSubSimulations: N_SUB,
+        surpriseSigma: (store.surprisePercent / 100) * 0.3,
       };
       worker.postMessage(req);
     }).finally(() => worker.terminate());

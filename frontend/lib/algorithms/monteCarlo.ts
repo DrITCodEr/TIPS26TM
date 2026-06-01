@@ -57,6 +57,7 @@ function playKnockoutBracket(
   r32Slots: number[],
   staerken: number[],
   rng: Rng,
+  surpriseSigma: number,
 ): { champion: number; reachedRound: Record<number, number> } {
   const reachedRound: Record<number, number> = {};
   for (const idx of r32Slots) reachedRound[idx] = 1;
@@ -70,6 +71,7 @@ function playKnockoutBracket(
       r32Slots[m * 2 + 1],
       staerken,
       rng,
+      surpriseSigma,
     );
     reachedRound[winner] = 2;
     r32Winners[m] = winner;
@@ -85,6 +87,7 @@ function playKnockoutBracket(
       r32Winners[b],
       staerken,
       rng,
+      surpriseSigma,
     );
     reachedRound[winner] = 3;
     r16Winners[m] = winner;
@@ -100,6 +103,7 @@ function playKnockoutBracket(
       r16Winners[b],
       staerken,
       rng,
+      surpriseSigma,
     );
     reachedRound[winner] = 4;
     qfWinners[m] = winner;
@@ -115,6 +119,7 @@ function playKnockoutBracket(
       qfWinners[b],
       staerken,
       rng,
+      surpriseSigma,
     );
     reachedRound[winner] = 5;
     sfWinners[m] = winner;
@@ -127,6 +132,7 @@ function playKnockoutBracket(
     sfWinners[1],
     staerken,
     rng,
+    surpriseSigma,
   );
   reachedRound[champion] = 6;
   return { champion, reachedRound };
@@ -148,6 +154,7 @@ export function simulateOneTournament(args: {
   teamStats: TeamStats[];
   matchStats: MatchStats[];
   groupRankStats: GroupRankStats[];
+  surpriseSigma?: number;
 }): TournamentOutcome {
   const {
     algorithm,
@@ -158,6 +165,7 @@ export function simulateOneTournament(args: {
     teamStats,
     matchStats,
     groupRankStats,
+    surpriseSigma = 0,
   } = args;
 
   // === Gruppenphase ===
@@ -175,7 +183,13 @@ export function simulateOneTournament(args: {
     const m = schedule[mi];
     const a = m.idxA!;
     const b = m.idxB!;
-    const result = simulateMatch(algorithm, staerken[a], staerken[b], rng);
+    const result = simulateMatch(
+      algorithm,
+      staerken[a],
+      staerken[b],
+      rng,
+      surpriseSigma,
+    );
 
     const ms = matchStats[mi];
     ms.goalsA += result.toreA;
@@ -244,6 +258,7 @@ export function simulateOneTournament(args: {
     r32Slots,
     staerken,
     rng,
+    surpriseSigma,
   );
 
   // Akkumuliere Team-Stats auf Basis der erreichten Runde
@@ -268,6 +283,12 @@ export interface MonteCarloConfig {
   schedule: Match[];
   marktQuoten?: MarktQuoten;
   playerAggregates?: Record<string, PlayerAggregates>;
+  /**
+   * Tagesform-Streuung pro Match, orthogonal zum Algorithmus.
+   * 0 = deterministische Stärke. 0.30 = ±30 % pro Team pro Match (max).
+   * UI nutzt 0..0.30 als Skala (entspricht 0..100 % „Surprise"-Slider).
+   */
+  surpriseSigma?: number;
   rng?: Rng;
   /** Wird ~100x pro Run aufgerufen mit progress ∈ [0, 1]. */
   onProgress?: (progress: number) => void;
@@ -289,6 +310,7 @@ export async function runMonteCarlo(
     schedule,
     marktQuoten,
     playerAggregates,
+    surpriseSigma = 0,
     rng = defaultRng,
     onProgress,
   } = config;
@@ -324,6 +346,7 @@ export async function runMonteCarlo(
         teamStats,
         matchStats,
         groupRankStats,
+        surpriseSigma,
       });
     }
     done += batchSize;

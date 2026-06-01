@@ -31,6 +31,8 @@ interface State {
   activePreset: PresetKey | null;
   numSimulationsIdx: number;
   sensRangePercent: 15 | 30 | 50;
+  /** 0..100 — orthogonaler Tagesform-Slider, wirkt auf alle Algorithmen */
+  surprisePercent: number;
   simulationResult: SimulationResult | null;
   sensitivityResult: SensitivityResult | null;
   loading: LoadingState;
@@ -43,6 +45,7 @@ interface State {
   applyPreset: (p: PresetKey) => void;
   setNumSimulationsIdx: (i: number) => void;
   setSensRangePercent: (p: 15 | 30 | 50) => void;
+  setSurprisePercent: (p: number) => void;
   setSimulationResult: (r: SimulationResult | null) => void;
   setSensitivityResult: (r: SensitivityResult | null) => void;
   setLoading: (l: Partial<LoadingState> & { kind?: LoadingKind }) => void;
@@ -57,6 +60,7 @@ export const useStore = create<State>((set) => ({
   activePreset: "default",
   numSimulationsIdx: 2,
   sensRangePercent: 30,
+  surprisePercent: 0,
   simulationResult: null,
   sensitivityResult: null,
   loading: initialLoading,
@@ -69,6 +73,8 @@ export const useStore = create<State>((set) => ({
   applyPreset: (p) => set({ weights: { ...PRESETS[p] }, activePreset: p }),
   setNumSimulationsIdx: (i) => set({ numSimulationsIdx: i }),
   setSensRangePercent: (p) => set({ sensRangePercent: p }),
+  setSurprisePercent: (p) =>
+    set({ surprisePercent: Math.max(0, Math.min(100, Math.round(p))) }),
   setSimulationResult: (r) => set({ simulationResult: r }),
   setSensitivityResult: (r) => set({ sensitivityResult: r }),
   setLoading: (l) => set((s) => ({ loading: { ...s.loading, ...l } })),

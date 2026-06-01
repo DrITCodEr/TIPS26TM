@@ -27,6 +27,8 @@ interface SimulationStore {
   activePreset: PresetKey | null;
   numSimulationsIdx: number; // Index in SIM_LEVELS
   sensRangePercent: 15 | 30 | 50;
+  /** 0..100 ; 0 = deterministisch, 100 = ±30 % Tagesform-Streuung pro Match */
+  surprisePercent: number;
 
   // Ergebnisse
   simulationResult: SimulationResult | null;
@@ -42,6 +44,7 @@ interface SimulationStore {
   applyPreset: (preset: PresetKey) => void;
   setNumSimulationsIdx: (idx: number) => void;
   setSensRangePercent: (p: 15 | 30 | 50) => void;
+  setSurprisePercent: (p: number) => void;
   setSimulationResult: (r: SimulationResult | null) => void;
   setSensitivityResult: (r: SensitivityResult | null) => void;
   setSimState: (s: SimState) => void;
@@ -62,6 +65,7 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
   activePreset: "default",
   numSimulationsIdx: 2, // 5.000
   sensRangePercent: 30,
+  surprisePercent: 0,
 
   simulationResult: null,
   sensitivityResult: null,
@@ -83,6 +87,9 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
   setNumSimulationsIdx: (idx) => set({ numSimulationsIdx: idx }),
 
   setSensRangePercent: (p) => set({ sensRangePercent: p }),
+
+  setSurprisePercent: (p) =>
+    set({ surprisePercent: Math.max(0, Math.min(100, Math.round(p))) }),
 
   setSimulationResult: (r) => set({ simulationResult: r }),
   setSensitivityResult: (r) => set({ sensitivityResult: r }),

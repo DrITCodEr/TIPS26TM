@@ -183,6 +183,52 @@ function SimDepthSlider() {
   );
 }
 
+function SurpriseSlider() {
+  const value = useStore((s) => s.surprisePercent);
+  const setValue = useStore((s) => s.setSurprisePercent);
+  const sigmaPercent = ((value / 100) * 0.3 * 100).toFixed(0);
+  let hint = "Deterministisch — keine Tagesform-Streuung.";
+  if (value > 0 && value <= 20) hint = "Dezent — kleine Schwankungen, ähnliche Top-Favoriten.";
+  else if (value <= 50) hint = "Spürbar — Außenseiter überraschen häufiger.";
+  else if (value <= 80) hint = "Hoch — Top-Favoriten scheitern öfter in der K.o.-Phase.";
+  else if (value > 80) hint = "Sehr hoch — fast jedes Turnier bringt einen unerwarteten Champion.";
+
+  return (
+    <Card>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 15 }}>🎲</span> Überraschungs-Faktor
+          </div>
+          <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
+            Tagesform-Streuung pro Team pro Match
+          </div>
+        </div>
+        <div className="slider-value-pill" style={{ fontSize: 14, padding: "6px 12px" }}>{value}%</div>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={5}
+        value={value}
+        onChange={(e) => setValue(Number(e.target.value))}
+        className="tips-range"
+        style={{ "--val": `${value}%` } as CSSProperties}
+      />
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)" }}>
+        <span>0 % (aus)</span><span>50 %</span><span>100 % (chaotisch)</span>
+      </div>
+      <div style={{ marginTop: 12, fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+        {hint}{" "}
+        <span style={{ color: "var(--text-tertiary)" }}>
+          (Stärke-Faktor pro Match ±{sigmaPercent} %)
+        </span>
+      </div>
+    </Card>
+  );
+}
+
 export function SetupTab({ onSimulationDone }: { onSimulationDone: () => void }) {
   const idx = useStore((s) => s.numSimulationsIdx);
   const loading = useStore((s) => s.loading.kind);
@@ -206,6 +252,9 @@ export function SetupTab({ onSimulationDone }: { onSimulationDone: () => void })
 
       <SectionTitle>🎲 Simulations-Tiefe</SectionTitle>
       <SimDepthSlider />
+
+      <SectionTitle>🎰 Überraschungs-Faktor</SectionTitle>
+      <SurpriseSlider />
 
       <div className="sim-controls">
         <Button variant="primary" full disabled={loading !== null} onClick={run}>

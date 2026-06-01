@@ -4,6 +4,7 @@ import { AlgorithmSwitcher } from "@/components/setup/AlgorithmSwitcher";
 import { Presets } from "@/components/setup/Presets";
 import { FactorSliders } from "@/components/setup/FactorSliders";
 import { SimDepthSlider } from "@/components/setup/SimDepthSlider";
+import { SurpriseSlider } from "@/components/setup/SurpriseSlider";
 import { RunSimulationButton } from "@/components/setup/RunSimulationButton";
 
 export default function SetupPage() {
@@ -25,6 +26,9 @@ export default function SetupPage() {
 
       <SectionTitle>🎲 Simulations-Tiefe</SectionTitle>
       <SimDepthSlider />
+
+      <SectionTitle>🎰 Überraschungs-Faktor</SectionTitle>
+      <SurpriseSlider />
 
       <RunSimulationButton />
     </section>

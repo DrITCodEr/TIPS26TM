@@ -26,6 +26,7 @@ self.addEventListener("message", async (e: MessageEvent<WorkerRequest>) => {
         schedule: SCHEDULE,
         marktQuoten: MARKT_QUOTEN,
         playerAggregates: PLAYER_AGGREGATES,
+        surpriseSigma: req.surpriseSigma ?? 0,
         onProgress: (value) => post({ type: "progress", value }),
       });
       post({ type: "simulationResult", value: result });
@@ -40,6 +41,7 @@ self.addEventListener("message", async (e: MessageEvent<WorkerRequest>) => {
         schedule: SCHEDULE,
         marktQuoten: MARKT_QUOTEN,
         playerAggregates: PLAYER_AGGREGATES,
+        surpriseSigma: req.surpriseSigma ?? 0,
         onProgress: (value) => post({ type: "progress", value }),
       });
       post({ type: "sensitivityResult", value: result });
