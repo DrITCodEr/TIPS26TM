@@ -12,6 +12,7 @@ import {
 import { calculateStrengths_v2, simulateMatch_v2 } from "./tips26v2";
 import { calculateStrengths_v3 } from "./tips26v3";
 import { calculateStrengths_v4 } from "./tips26v4";
+import { simulateMatch_v5 } from "./tips26v5";
 
 export function calculateStrengths(
   algorithm: AlgorithmVersion,
@@ -36,9 +37,13 @@ export function calculateStrengths(
     }
     return calculateStrengths_v3(teams, weights, marktQuoten, playerAggregates);
   }
-  if (algorithm === "v2") {
+  if (algorithm === "v2" || algorithm === "v5") {
+    // v5 nutzt dieselbe v2-Stärke-Berechnung (Markt-Blend), nur die
+    // Tor-Sim unterscheidet sich.
     if (!marktQuoten) {
-      throw new Error("TIPS-26.2 (v2) requires marktQuoten.");
+      throw new Error(
+        `TIPS-26.${algorithm === "v5" ? "5" : "2"} requires marktQuoten.`,
+      );
     }
     return calculateStrengths_v2(teams, weights, marktQuoten);
   }
@@ -48,9 +53,12 @@ export function calculateStrengths(
 /**
  * Match-Simulation Dispatcher.
  *
- * v3 nutzt dasselbe Tor-Modell wie v2 (log-linear + Dixon-Coles). Das
- * Player-Signal wirkt ausschließlich über die Pre-Tournament-Stärke,
- * nicht über asymmetrische λ-Verschiebung.
+ *   v1   : additive Poisson, unabhängige Tore
+ *   v2/3/4: log-linear + Dixon-Coles-Approximation
+ *   v5   : log-linear + Bivariate Poisson (Karlis-Ntzoufras 2003)
+ *
+ * v3/v4 reuse das v2-Tor-Modell — das Player-/Ensemble-Signal wirkt
+ * ausschließlich über die Pre-Tournament-Stärke.
  */
 export function simulateMatch(
   algorithm: AlgorithmVersion,
@@ -58,6 +66,7 @@ export function simulateMatch(
   sB: number,
   rng: Rng = defaultRng,
 ): MatchResult {
+  if (algorithm === "v5") return simulateMatch_v5(sA, sB, rng);
   if (algorithm === "v2" || algorithm === "v3" || algorithm === "v4") {
     return simulateMatch_v2(sA, sB, rng);
   }
@@ -72,4 +81,5 @@ export {
   calculateStrengths_v4,
   simulateMatch_v1,
   simulateMatch_v2,
+  simulateMatch_v5,
 };

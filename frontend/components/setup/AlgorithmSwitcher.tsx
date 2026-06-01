@@ -48,13 +48,25 @@ const ALGO_INFO: Record<
       "<code>final = 0.15·v1 + 0.45·v2 + 0.40·v3</code><br/>" +
       "Default-Gewichte aus Literatur. Werden später durch CV-optimierte Gewichte ersetzt, sobald das Python-Training-Skript (<code>scripts/train_aggregator.py</code>) ein .onnx-Modell exportiert. Der ONNX-Loader liegt unter <code>lib/algorithms/mlAggregator.ts</code> bereit — sobald <code>public/models/aggregator.onnx</code> existiert, wird XGBoost-Inferenz aktiv.",
   },
+  v5: {
+    title: "TIPS-26.5",
+    tag: "Bivariate",
+    desc: "v2-Stärken + exakte Bivariate Poisson",
+    details:
+      "Exakte Bivariate Poisson nach <em>Karlis & Ntzoufras (2003)</em> statt Dixon-Coles-Resampling-Approximation:<br/>" +
+      "<code>X_A = X_1 + X_3</code> · <code>X_B = X_2 + X_3</code> mit gemeinsamem λ_3 = 0.2<br/>" +
+      "• Marginal-Mittelwerte identisch zu v2 (⌀-Tore unverändert)<br/>" +
+      "• Positive Korrelation der Tore beider Teams (offene Spiele)<br/>" +
+      "• Mehr Diagonal-Remis (2:2, 3:3), weniger Konzentration auf 1:1<br/>" +
+      "Stärke-Berechnung wie v2 (Composite + Markt-Konsens-Blend), damit der Bivariate-Effekt isoliert messbar bleibt — direkter Vergleich v2 ⇔ v5 zeigt nur den Tor-Modell-Unterschied.",
+  },
 };
 
 export function AlgorithmSwitcher() {
   const algorithm = useSimulationStore((s) => s.algorithm);
   const setAlgorithm = useSimulationStore((s) => s.setAlgorithm);
 
-  const versions: AlgorithmVersion[] = ["v1", "v2", "v3", "v4"];
+  const versions: AlgorithmVersion[] = ["v1", "v2", "v3", "v4", "v5"];
 
   return (
     <>
