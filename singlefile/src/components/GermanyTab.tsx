@@ -8,6 +8,66 @@ import { AlgorithmBadge, Card, InfoBanner, SectionTitle } from "./ui";
 
 const DFB = "Deutschland";
 
+function DfbCheatToggle() {
+  const active = useStore((s) => s.dfbAlwaysWins);
+  const setActive = useStore((s) => s.setDfbAlwaysWins);
+  return (
+    <button
+      onClick={() => setActive(!active)}
+      style={{
+        width: "100%",
+        padding: 16,
+        textAlign: "left",
+        borderRadius: 16,
+        cursor: "pointer",
+        background: active
+          ? "linear-gradient(135deg, rgba(239,68,68,0.18), rgba(239,68,68,0.06))"
+          : "var(--bg-card)",
+        border: active ? "1px solid rgba(239,68,68,0.5)" : "1px solid var(--border-subtle)",
+        boxShadow: active ? "0 0 16px rgba(239,68,68,0.25)" : "none",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 22 }}>🇩🇪</span>
+          <span style={{ fontSize: 14, fontWeight: 800, color: active ? "#fca5a5" : "var(--text-primary)" }}>
+            Deutschland gewinnt immer
+          </span>
+        </div>
+        <div
+          style={{
+            width: 48, height: 28, borderRadius: 14, position: "relative", flexShrink: 0,
+            background: active ? "var(--germany-red)" : "var(--bg-tertiary)",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute", top: 4, width: 20, height: 20, borderRadius: 10,
+              background: "#fff", boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+              left: active ? 24 : 4, transition: "left 0.15s ease",
+            }}
+          />
+        </div>
+      </div>
+      <div style={{ fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+        {active ? (
+          <>
+            <strong style={{ color: "#fca5a5" }}>🏆 AKTIV.</strong> Jedes DFB-Spiel endet 3:0 für Deutschland,
+            jede K.o.-Runde wird durchmarschiert. Mit Spanien, Frankreich & Co. wird im Halbfinale kurz
+            reingeschaut — zum Frühstück gibts dann den Pokal.
+          </>
+        ) : (
+          <>
+            <strong>Easter-Egg.</strong> Nur für den Bierkasten-Spaß. Schaltet jede Statistik aus und
+            macht Deutschland deterministisch zum Weltmeister. Wissenschaftlich wertlos, emotional wertvoll.
+          </>
+        )}
+      </div>
+    </button>
+  );
+}
+
 export function GermanyTab() {
   const result = useStore((s) => s.simulationResult);
   const algorithm = useStore((s) => s.algorithm);
@@ -145,6 +205,9 @@ export function GermanyTab() {
           </div>
         ))}
       </Card>
+
+      <SectionTitle>🎉 Spaß-Modus</SectionTitle>
+      <DfbCheatToggle />
 
       <SectionTitle>💪 Stärken-Profil</SectionTitle>
       <Card>

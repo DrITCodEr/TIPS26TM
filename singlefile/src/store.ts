@@ -35,6 +35,8 @@ interface State {
   surprisePercent: number;
   /** 0..100 — Tor-Streuung (Negativ-Binomial-Overdispersion) */
   dispersionPercent: number;
+  /** 🇩🇪 Easter-Egg: DFB-Spiele werden deterministisch 3:0 für Deutschland. */
+  dfbAlwaysWins: boolean;
   simulationResult: SimulationResult | null;
   sensitivityResult: SensitivityResult | null;
   loading: LoadingState;
@@ -49,6 +51,7 @@ interface State {
   setSensRangePercent: (p: 15 | 30 | 50) => void;
   setSurprisePercent: (p: number) => void;
   setDispersionPercent: (p: number) => void;
+  setDfbAlwaysWins: (v: boolean) => void;
   setSimulationResult: (r: SimulationResult | null) => void;
   setSensitivityResult: (r: SensitivityResult | null) => void;
   setLoading: (l: Partial<LoadingState> & { kind?: LoadingKind }) => void;
@@ -65,6 +68,7 @@ export const useStore = create<State>((set) => ({
   sensRangePercent: 30,
   surprisePercent: 0,
   dispersionPercent: 0,
+  dfbAlwaysWins: false,
   simulationResult: null,
   sensitivityResult: null,
   loading: initialLoading,
@@ -81,6 +85,7 @@ export const useStore = create<State>((set) => ({
     set({ surprisePercent: Math.max(0, Math.min(100, Math.round(p))) }),
   setDispersionPercent: (p) =>
     set({ dispersionPercent: Math.max(0, Math.min(100, Math.round(p))) }),
+  setDfbAlwaysWins: (v) => set({ dfbAlwaysWins: v }),
   setSimulationResult: (r) => set({ simulationResult: r }),
   setSensitivityResult: (r) => set({ sensitivityResult: r }),
   setLoading: (l) => set((s) => ({ loading: { ...s.loading, ...l } })),

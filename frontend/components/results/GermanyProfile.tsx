@@ -1,5 +1,6 @@
 "use client";
 
+import { DfbCheatToggle } from "@/components/setup/DfbCheatToggle";
 import { useSimulationStore } from "@/lib/stores/simulationStore";
 import { TEAMS } from "@/lib/data/teams";
 import { SCHEDULE } from "@/lib/data/schedule";
@@ -258,6 +259,9 @@ export function GermanyProfile() {
           Demo-Daten. Echte Werte via fbref-/transfermarkt-Scraping (Roadmap §9.2).
         </div>
       </Card>
+
+      <SectionTitle>🎉 Spaß-Modus</SectionTitle>
+      <DfbCheatToggle />
 
       <SectionTitle>💪 Stärken-Profil</SectionTitle>
       <Card>

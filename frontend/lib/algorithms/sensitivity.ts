@@ -41,6 +41,7 @@ export interface SensitivityConfig {
   playerAggregates?: Record<string, PlayerAggregates>;
   surpriseSigma?: number;
   dispersion?: number;
+  dfbAlwaysWins?: boolean;
   rng?: Rng;
   onProgress?: (progress: number) => void;
 }
@@ -94,6 +95,7 @@ export async function runSensitivity(
     playerAggregates,
     surpriseSigma = 0,
     dispersion = 0,
+    dfbAlwaysWins = false,
     rng = defaultRng,
     onProgress,
   } = config;
@@ -143,6 +145,7 @@ export async function runSensitivity(
         groupRankStats,
         surpriseSigma,
         dispersion,
+        dfbAlwaysWins,
       });
     }
 

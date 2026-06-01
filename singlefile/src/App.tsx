@@ -81,7 +81,7 @@ function AppHeader() {
             <div className="app-logo-sub">STOCHASTIC ENGINE</div>
           </div>
         </div>
-        <div className="profile-pill"><span className="profile-pill-dot" />v2.6</div>
+        <div className="profile-pill"><span className="profile-pill-dot" />v3.0</div>
       </div>
       <h1 className="app-title">TIPS<span className="mint-text">-26™</span></h1>
       <div className="app-subtitle">

@@ -106,7 +106,7 @@ export function HomeTab({ nav }: { nav: (t: Tab) => void }) {
           5 wählbare Modell-Varianten (v1 Classic → v5 Bivariate), Monte-Carlo bis 1 Mio Sims, FIFA-konformes K.o.-Bracket, Player-Level-Aggregates, Markt-Edge gegen Buchmacher-Konsens.
         </p>
         <p style={{ fontSize: 10, marginTop: 8, color: "var(--text-tertiary)" }}>
-          © Thomas-Irawan Method · TIPS-26™ Single-File v1.0
+          © Thomas-Irawan Method · TIPS-26™ Version 3.0.0 · Single-File-Build
         </p>
       </Card>
 

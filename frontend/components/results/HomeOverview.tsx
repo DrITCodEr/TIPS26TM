@@ -221,7 +221,7 @@ export function HomeOverview() {
           className="text-[10px] mt-2.5"
           style={{ color: "var(--text-tertiary)" }}
         >
-          © Thomas-Irawan Method · TIPS-26™ Version 2.6.0
+          © Thomas-Irawan Method · TIPS-26™ Version 3.0.0
         </p>
       </Card>
 

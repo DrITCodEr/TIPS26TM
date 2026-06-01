@@ -28,6 +28,7 @@ self.addEventListener("message", async (e: MessageEvent<WorkerRequest>) => {
         playerAggregates: PLAYER_AGGREGATES,
         surpriseSigma: req.surpriseSigma ?? 0,
         dispersion: req.dispersion ?? 0,
+        dfbAlwaysWins: req.dfbAlwaysWins ?? false,
         onProgress: (value) => post({ type: "progress", value }),
       });
       post({ type: "simulationResult", value: result });
@@ -44,6 +45,7 @@ self.addEventListener("message", async (e: MessageEvent<WorkerRequest>) => {
         playerAggregates: PLAYER_AGGREGATES,
         surpriseSigma: req.surpriseSigma ?? 0,
         dispersion: req.dispersion ?? 0,
+        dfbAlwaysWins: req.dfbAlwaysWins ?? false,
         onProgress: (value) => post({ type: "progress", value }),
       });
       post({ type: "sensitivityResult", value: result });

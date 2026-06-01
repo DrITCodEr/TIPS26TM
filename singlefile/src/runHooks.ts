@@ -58,6 +58,7 @@ export function useRunSimulation(onDone?: () => void) {
       playerAggregates: PLAYER_AGGREGATES,
       surpriseSigma: (s.surprisePercent / 100) * 0.3,
       dispersion: (s.dispersionPercent / 100) * 0.4,
+      dfbAlwaysWins: s.dfbAlwaysWins,
       onProgress: (p) => {
         const done = Math.round(p * N);
         const now = Date.now();
@@ -118,6 +119,7 @@ export function useRunSensitivity() {
       playerAggregates: PLAYER_AGGREGATES,
       surpriseSigma: (s.surprisePercent / 100) * 0.3,
       dispersion: (s.dispersionPercent / 100) * 0.4,
+      dfbAlwaysWins: s.dfbAlwaysWins,
       onProgress: (p) => {
         const done = Math.round(p * N_PERT);
         const now = Date.now();

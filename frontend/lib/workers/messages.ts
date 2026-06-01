@@ -12,6 +12,7 @@ export interface SimulateRequest {
   numSimulations: number;
   surpriseSigma?: number;
   dispersion?: number;
+  dfbAlwaysWins?: boolean;
 }
 
 export interface SensitivityRequest {
@@ -23,6 +24,7 @@ export interface SensitivityRequest {
   numSubSimulations: number;
   surpriseSigma?: number;
   dispersion?: number;
+  dfbAlwaysWins?: boolean;
 }
 
 export type WorkerRequest = SimulateRequest | SensitivityRequest;

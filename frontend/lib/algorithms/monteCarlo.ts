@@ -10,7 +10,7 @@ import type {
   SimulationResult,
   TeamStats,
 } from "@/lib/types/simulation";
-import { calculateStrengths, simulateMatch } from "./index";
+import { calculateStrengths, simulateMatch, type MatchResult } from "./index";
 import { simulateKnockout } from "./knockout";
 import { defaultRng, type Rng } from "./random";
 import { resolveR32, type QualifiedThird } from "./fifaBracket";
@@ -56,25 +56,35 @@ function playKnockoutBracket(
   algorithm: AlgorithmVersion,
   r32Slots: number[],
   staerken: number[],
+  teams: Team[],
   rng: Rng,
   surpriseSigma: number,
   dispersion: number,
+  dfbAlwaysWins: boolean,
 ): { champion: number; reachedRound: Record<number, number> } {
+  // Helper: bei aktivem Cheat-Mode gewinnt DFB jedes K.o.-Spiel.
+  const koPick = (a: number, b: number): number => {
+    if (dfbAlwaysWins) {
+      if (teams[a].name === "Deutschland") return a;
+      if (teams[b].name === "Deutschland") return b;
+    }
+    return simulateKnockout(
+      algorithm,
+      a,
+      b,
+      staerken,
+      rng,
+      surpriseSigma,
+      dispersion,
+    );
+  };
   const reachedRound: Record<number, number> = {};
   for (const idx of r32Slots) reachedRound[idx] = 1;
 
   // R32 → 16 Sieger
   const r32Winners = new Array<number>(16);
   for (let m = 0; m < 16; m++) {
-    const winner = simulateKnockout(
-      algorithm,
-      r32Slots[m * 2],
-      r32Slots[m * 2 + 1],
-      staerken,
-      rng,
-      surpriseSigma,
-      dispersion,
-    );
+    const winner = koPick(r32Slots[m * 2], r32Slots[m * 2 + 1]);
     reachedRound[winner] = 2;
     r32Winners[m] = winner;
   }
@@ -83,15 +93,7 @@ function playKnockoutBracket(
   const r16Winners = new Array<number>(8);
   for (let m = 0; m < R16_ROUND.feeders.length; m++) {
     const [a, b] = R16_ROUND.feeders[m];
-    const winner = simulateKnockout(
-      algorithm,
-      r32Winners[a],
-      r32Winners[b],
-      staerken,
-      rng,
-      surpriseSigma,
-      dispersion,
-    );
+    const winner = koPick(r32Winners[a], r32Winners[b]);
     reachedRound[winner] = 3;
     r16Winners[m] = winner;
   }
@@ -100,15 +102,7 @@ function playKnockoutBracket(
   const qfWinners = new Array<number>(4);
   for (let m = 0; m < QF_ROUND.feeders.length; m++) {
     const [a, b] = QF_ROUND.feeders[m];
-    const winner = simulateKnockout(
-      algorithm,
-      r16Winners[a],
-      r16Winners[b],
-      staerken,
-      rng,
-      surpriseSigma,
-      dispersion,
-    );
+    const winner = koPick(r16Winners[a], r16Winners[b]);
     reachedRound[winner] = 4;
     qfWinners[m] = winner;
   }
@@ -117,28 +111,13 @@ function playKnockoutBracket(
   const sfWinners = new Array<number>(2);
   for (let m = 0; m < SF_ROUND.feeders.length; m++) {
     const [a, b] = SF_ROUND.feeders[m];
-    const winner = simulateKnockout(
-      algorithm,
-      qfWinners[a],
-      qfWinners[b],
-      staerken,
-      rng,
-      surpriseSigma,
-      dispersion,
-    );
+    const winner = koPick(qfWinners[a], qfWinners[b]);
     reachedRound[winner] = 5;
     sfWinners[m] = winner;
   }
 
   // Finale
-  const champion = simulateKnockout(
-    algorithm,
-    sfWinners[0],
-    sfWinners[1],
-    staerken,
-    rng,
-    surpriseSigma,
-  );
+  const champion = koPick(sfWinners[0], sfWinners[1]);
   reachedRound[champion] = 6;
   return { champion, reachedRound };
 }
@@ -161,6 +140,8 @@ export function simulateOneTournament(args: {
   groupRankStats: GroupRankStats[];
   surpriseSigma?: number;
   dispersion?: number;
+  /** Easter-Egg: DFB-Spiele werden deterministisch 3:0 für Deutschland. */
+  dfbAlwaysWins?: boolean;
 }): TournamentOutcome {
   const {
     algorithm,
@@ -173,6 +154,7 @@ export function simulateOneTournament(args: {
     groupRankStats,
     surpriseSigma = 0,
     dispersion = 0,
+    dfbAlwaysWins = false,
   } = args;
 
   // === Gruppenphase ===
@@ -190,14 +172,23 @@ export function simulateOneTournament(args: {
     const m = schedule[mi];
     const a = m.idxA!;
     const b = m.idxB!;
-    const result = simulateMatch(
-      algorithm,
-      staerken[a],
-      staerken[b],
-      rng,
-      surpriseSigma,
-      dispersion,
-    );
+    let result: MatchResult;
+    const aIsDfb = dfbAlwaysWins && teams[a].name === "Deutschland";
+    const bIsDfb = dfbAlwaysWins && teams[b].name === "Deutschland";
+    if (aIsDfb) {
+      result = { toreA: 3, toreB: 0 };
+    } else if (bIsDfb) {
+      result = { toreA: 0, toreB: 3 };
+    } else {
+      result = simulateMatch(
+        algorithm,
+        staerken[a],
+        staerken[b],
+        rng,
+        surpriseSigma,
+        dispersion,
+      );
+    }
 
     const ms = matchStats[mi];
     ms.goalsA += result.toreA;
@@ -265,9 +256,11 @@ export function simulateOneTournament(args: {
     algorithm,
     r32Slots,
     staerken,
+    teams,
     rng,
     surpriseSigma,
     dispersion,
+    dfbAlwaysWins,
   );
 
   // Akkumuliere Team-Stats auf Basis der erreichten Runde
@@ -304,6 +297,8 @@ export interface MonteCarloConfig {
    * UI-Slider 0..100 % entspricht 0..0.40.
    */
   dispersion?: number;
+  /** Easter-Egg: DFB-Spiele werden deterministisch 3:0 für Deutschland. */
+  dfbAlwaysWins?: boolean;
   rng?: Rng;
   /** Wird ~100x pro Run aufgerufen mit progress ∈ [0, 1]. */
   onProgress?: (progress: number) => void;
@@ -327,6 +322,7 @@ export async function runMonteCarlo(
     playerAggregates,
     surpriseSigma = 0,
     dispersion = 0,
+    dfbAlwaysWins = false,
     rng = defaultRng,
     onProgress,
   } = config;
@@ -364,6 +360,7 @@ export async function runMonteCarlo(
         groupRankStats,
         surpriseSigma,
         dispersion,
+        dfbAlwaysWins,
       });
     }
     done += batchSize;

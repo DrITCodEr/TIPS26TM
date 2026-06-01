@@ -31,6 +31,8 @@ interface SimulationStore {
   surprisePercent: number;
   /** 0..100 ; 0 = reine Poisson-Tore, 100 = stark überdispers (häufiger 4:1, 5:0, 7:1) */
   dispersionPercent: number;
+  /** 🇩🇪 Easter-Egg: DFB-Spiele werden immer 3:0 für Deutschland. */
+  dfbAlwaysWins: boolean;
 
   // Ergebnisse
   simulationResult: SimulationResult | null;
@@ -48,6 +50,7 @@ interface SimulationStore {
   setSensRangePercent: (p: 15 | 30 | 50) => void;
   setSurprisePercent: (p: number) => void;
   setDispersionPercent: (p: number) => void;
+  setDfbAlwaysWins: (v: boolean) => void;
   setSimulationResult: (r: SimulationResult | null) => void;
   setSensitivityResult: (r: SensitivityResult | null) => void;
   setSimState: (s: SimState) => void;
@@ -70,6 +73,7 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
   sensRangePercent: 30,
   surprisePercent: 0,
   dispersionPercent: 0,
+  dfbAlwaysWins: false,
 
   simulationResult: null,
   sensitivityResult: null,
@@ -97,6 +101,8 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
 
   setDispersionPercent: (p) =>
     set({ dispersionPercent: Math.max(0, Math.min(100, Math.round(p))) }),
+
+  setDfbAlwaysWins: (v) => set({ dfbAlwaysWins: v }),
 
   setSimulationResult: (r) => set({ simulationResult: r }),
   setSensitivityResult: (r) => set({ sensitivityResult: r }),

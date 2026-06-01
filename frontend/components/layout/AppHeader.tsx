@@ -43,7 +43,7 @@ export function AppHeader() {
               boxShadow: "0 0 8px var(--mint)",
             }}
           />
-          v2.6
+          v3.0
         </div>
       </div>
       <h1

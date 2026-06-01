@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { useStore } from "@/store";
 import type { AlgorithmVersion } from "@lib/types/simulation";
 
 export function SectionTitle({ children }: { children: ReactNode }) {
@@ -60,6 +61,7 @@ export function Button({
 }
 
 export function AlgorithmBadge({ algorithm }: { algorithm: AlgorithmVersion }) {
+  const dfbCheat = useStore((s) => s.dfbAlwaysWins);
   const isAdvanced =
     algorithm === "v2" || algorithm === "v3" || algorithm === "v4" || algorithm === "v5";
   const label =
@@ -75,9 +77,26 @@ export function AlgorithmBadge({ algorithm }: { algorithm: AlgorithmVersion }) {
     : algorithm === "v2" ? "⚡"
     : "🧮";
   return (
-    <div className={`algo-badge ${isAdvanced ? "advanced" : ""}`}>
-      <span>{icon}</span>
-      <span>Berechnet mit <strong>{label}</strong></span>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+      <div className={`algo-badge ${isAdvanced ? "advanced" : ""}`} style={{ marginBottom: 0 }}>
+        <span>{icon}</span>
+        <span>Berechnet mit <strong>{label}</strong></span>
+      </div>
+      {dfbCheat && (
+        <div
+          className="algo-badge"
+          style={{
+            marginBottom: 0,
+            background: "rgba(239,68,68,0.15)",
+            border: "1px solid rgba(239,68,68,0.5)",
+            color: "#fca5a5",
+            boxShadow: "0 0 8px rgba(239,68,68,0.3)",
+          }}
+        >
+          <span>🇩🇪</span>
+          <span><strong>CHEAT-MODE</strong> aktiv</span>
+        </div>
+      )}
     </div>
   );
 }
