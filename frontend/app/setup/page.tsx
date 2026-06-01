@@ -6,6 +6,7 @@ import { FactorSliders } from "@/components/setup/FactorSliders";
 import { SimDepthSlider } from "@/components/setup/SimDepthSlider";
 import { SurpriseSlider } from "@/components/setup/SurpriseSlider";
 import { OverdispersionSlider } from "@/components/setup/OverdispersionSlider";
+import { DfbCheatToggle } from "@/components/setup/DfbCheatToggle";
 import { RunSimulationButton } from "@/components/setup/RunSimulationButton";
 
 export default function SetupPage() {
@@ -33,6 +34,9 @@ export default function SetupPage() {
 
       <SectionTitle>⚡ Tor-Streuung</SectionTitle>
       <OverdispersionSlider />
+
+      <SectionTitle>🎉 Spaß-Modus</SectionTitle>
+      <DfbCheatToggle />
 
       <RunSimulationButton />
     </section>
