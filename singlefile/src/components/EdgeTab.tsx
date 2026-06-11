@@ -8,6 +8,7 @@ import {
   calculateMatchEdges,
   calculateTitelEdge,
 } from "@lib/algorithms/edgeAnalysis";
+import { useT } from "@/i18n";
 import { AlgorithmBadge, EmptyResult, InfoBanner, SectionTitle, signed } from "./ui";
 
 function pillClass(edge: number, threshold = 0.5) {
@@ -17,6 +18,7 @@ function pillClass(edge: number, threshold = 0.5) {
 
 export function EdgeTab({ nav }: { nav: (t: Tab) => void }) {
   const result = useStore((s) => s.simulationResult);
+  const { t, teamName } = useT();
 
   const titelEdges = useMemo(
     () => (result ? calculateTitelEdge(result, TEAMS, MARKT_QUOTEN).slice(0, 20) : []),
@@ -38,41 +40,41 @@ export function EdgeTab({ nav }: { nav: (t: Tab) => void }) {
     <section>
       <AlgorithmBadge algorithm={result.algorithm} />
       <InfoBanner icon="📈">
-        <strong>Value-Bet-Analyse:</strong> Wo weicht TIPS-26 vom Buchmacher-Konsens ab? Positiver Edge = Modell sieht mehr Chance als der Markt.
+        <strong>{t.edge.bannerLead}</strong> {t.edge.bannerText}
       </InfoBanner>
 
-      <SectionTitle>🏆 Titel-Edge (echte Markt-Daten)</SectionTitle>
+      <SectionTitle>{t.edge.titleEdgeTitle}</SectionTitle>
       <div style={{ fontSize: 10, marginBottom: 8, padding: "0 4px", color: "var(--text-tertiary)" }}>
-        Markt-Quoten Stand <strong style={{ color: "var(--text-secondary)" }}>{ODDS_META.stand}</strong> · {ODDS_META.quellen.join(", ")}. Bookmaker-Margin entzerrt.
+        {t.edge.titleEdgeStand} <strong style={{ color: "var(--text-secondary)" }}>{ODDS_META.stand}</strong> · {ODDS_META.quellen.join(", ")}. {t.edge.titleEdgeMargin}
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {titelEdges.map((t) => {
-          const simW = Math.max(1, (t.simP / titelMax) * 100);
-          const marktW = Math.max(1, (t.marktP / titelMax) * 100);
+        {titelEdges.map((e) => {
+          const simW = Math.max(1, (e.simP / titelMax) * 100);
+          const marktW = Math.max(1, (e.marktP / titelMax) * 100);
           return (
-            <div key={t.teamIdx} className={`edge-card ${t.name === "Deutschland" ? "is-germany" : ""}`}>
+            <div key={e.teamIdx} className={`edge-card ${e.name === "Deutschland" ? "is-germany" : ""}`}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 16 }}>{t.flag}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700 }}>{t.name}</span>
+                  <span style={{ fontSize: 16 }}>{e.flag}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700 }}>{teamName(e.name)}</span>
                 </div>
-                <span className={`edge-pill ${pillClass(t.edge, 0.5)}`}>{signed(t.edge)} pp</span>
+                <span className={`edge-pill ${pillClass(e.edge, 0.5)}`}>{signed(e.edge)} {t.edge.pp}</span>
               </div>
               <div style={{ display: "grid", gap: 4 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 9, width: 36, fontWeight: 700, textTransform: "uppercase", color: "var(--text-tertiary)" }}>Markt</span>
+                  <span style={{ fontSize: 9, width: 36, fontWeight: 700, textTransform: "uppercase", color: "var(--text-tertiary)" }}>{t.edge.market}</span>
                   <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--bg-tertiary)", overflow: "hidden" }}>
                     <div style={{ width: `${marktW}%`, height: "100%", background: "rgba(148,163,184,0.6)" }} />
                   </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, width: 40, textAlign: "right", color: "var(--text-secondary)" }}>{t.marktP.toFixed(1)}%</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, width: 40, textAlign: "right", color: "var(--text-secondary)" }}>{e.marktP.toFixed(1)}%</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 9, width: 36, fontWeight: 700, textTransform: "uppercase", color: "var(--mint)" }}>Sim</span>
+                  <span style={{ fontSize: 9, width: 36, fontWeight: 700, textTransform: "uppercase", color: "var(--mint)" }}>{t.edge.sim}</span>
                   <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--bg-tertiary)", overflow: "hidden" }}>
                     <div style={{ width: `${simW}%`, height: "100%", background: "var(--mint)" }} />
                   </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, width: 40, textAlign: "right", color: "var(--mint)" }}>{t.simP.toFixed(1)}%</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, width: 40, textAlign: "right", color: "var(--mint)" }}>{e.simP.toFixed(1)}%</span>
                 </div>
               </div>
             </div>
@@ -80,9 +82,9 @@ export function EdgeTab({ nav }: { nav: (t: Tab) => void }) {
         })}
       </div>
 
-      <SectionTitle>⚽ Match-Edge (markt-konsistent abgeleitet)</SectionTitle>
+      <SectionTitle>{t.edge.matchEdgeTitle}</SectionTitle>
       <InfoBanner icon="ⓘ">
-        Buchmacher öffnen Match-Märkte erst kurz vor Anpfiff. Hier aus Outright-Quoten + Poisson-Modell <strong>markt-konsistent abgeleitet</strong>. Top 15 mit größter Abweichung:
+        {t.edge.matchEdgeBanner}
       </InfoBanner>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -93,8 +95,8 @@ export function EdgeTab({ nav }: { nav: (t: Tab) => void }) {
           const row = (label: string, market: number, sim: number, edge: number) => (
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
               <span style={{ width: 16, fontWeight: 800, color: "var(--mint)" }}>{label}</span>
-              <span style={{ flex: 1, color: "var(--text-tertiary)" }}>M: <strong style={{ color: "var(--text-secondary)" }}>{market.toFixed(0)}%</strong></span>
-              <span style={{ flex: 1, color: "var(--text-tertiary)" }}>S: <strong style={{ color: "var(--mint)" }}>{sim.toFixed(0)}%</strong></span>
+              <span style={{ flex: 1, color: "var(--text-tertiary)" }}>{t.edge.market[0]}: <strong style={{ color: "var(--text-secondary)" }}>{market.toFixed(0)}%</strong></span>
+              <span style={{ flex: 1, color: "var(--text-tertiary)" }}>{t.edge.sim[0]}: <strong style={{ color: "var(--mint)" }}>{sim.toFixed(0)}%</strong></span>
               <span className={`edge-pill ${pillClass(edge, 2)}`} style={{ width: 50, textAlign: "center" }}>{signed(edge)}</span>
             </div>
           );
@@ -102,7 +104,7 @@ export function EdgeTab({ nav }: { nav: (t: Tab) => void }) {
             <div key={e.matchIdx} className={`match-card ${isG ? "is-germany" : ""}`}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {TEAMS[idxA].flag} {e.teamA} <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>vs</span> {TEAMS[idxB].flag} {e.teamB}
+                  {TEAMS[idxA].flag} {teamName(e.teamA)} <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>vs</span> {TEAMS[idxB].flag} {teamName(e.teamB)}
                 </div>
                 <div style={{ fontSize: 10, color: "var(--text-tertiary)", flexShrink: 0, marginLeft: 8 }}>{e.date.split(",")[0]} · {e.time}</div>
               </div>

@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useStore } from "@/store";
 import type { AlgorithmVersion } from "@lib/types/simulation";
+import { useT } from "@/i18n";
 
 export function SectionTitle({ children }: { children: ReactNode }) {
   return <div className="section-title">{children}</div>;
@@ -62,14 +63,15 @@ export function Button({
 
 export function AlgorithmBadge({ algorithm }: { algorithm: AlgorithmVersion }) {
   const dfbCheat = useStore((s) => s.dfbAlwaysWins);
+  const { t } = useT();
   const isAdvanced =
     algorithm === "v2" || algorithm === "v3" || algorithm === "v4" || algorithm === "v5";
   const label =
-    algorithm === "v5" ? "TIPS-26.5 Bivariate"
-    : algorithm === "v4" ? "TIPS-26.4 Ensemble"
-    : algorithm === "v3" ? "TIPS-26.3 Player"
-    : algorithm === "v2" ? "TIPS-26.2 Advanced"
-    : "TIPS-26.1 Classic";
+    algorithm === "v5" ? `${t.algoInfo.v5Title} ${t.algoInfo.v5Tag}`
+    : algorithm === "v4" ? `${t.algoInfo.v4Title} ${t.algoInfo.v4Tag}`
+    : algorithm === "v3" ? `${t.algoInfo.v3Title} ${t.algoInfo.v3Tag}`
+    : algorithm === "v2" ? `${t.algoInfo.v2Title} ${t.algoInfo.v2Tag}`
+    : `${t.algoInfo.v1Title} ${t.algoInfo.v1Tag}`;
   const icon =
     algorithm === "v5" ? "🎲"
     : algorithm === "v4" ? "🎯"
@@ -80,7 +82,7 @@ export function AlgorithmBadge({ algorithm }: { algorithm: AlgorithmVersion }) {
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
       <div className={`algo-badge ${isAdvanced ? "advanced" : ""}`} style={{ marginBottom: 0 }}>
         <span>{icon}</span>
-        <span>Berechnet mit <strong>{label}</strong></span>
+        <span>{t.algoInfo.badgeCalculated} <strong>{label}</strong></span>
       </div>
       {dfbCheat && (
         <div
@@ -93,8 +95,7 @@ export function AlgorithmBadge({ algorithm }: { algorithm: AlgorithmVersion }) {
             boxShadow: "0 0 8px rgba(239,68,68,0.3)",
           }}
         >
-          <span>🇩🇪</span>
-          <span><strong>CHEAT-MODE</strong> aktiv</span>
+          <span>{t.algoInfo.cheatBadge}</span>
         </div>
       )}
     </div>
@@ -102,16 +103,17 @@ export function AlgorithmBadge({ algorithm }: { algorithm: AlgorithmVersion }) {
 }
 
 export function EmptyResult({ nav }: { nav: (t: any) => void }) {
+  const { t } = useT();
   return (
     <InfoBanner icon="!">
-      <strong>Noch keine Simulation gestartet.</strong> Wechsle zu{" "}
+      <strong>{t.groups.emptyTitle}</strong> {t.groups.emptyMid}{" "}
       <span
         style={{ color: "var(--mint)", textDecoration: "underline", cursor: "pointer", fontWeight: 700 }}
         onClick={() => nav("setup")}
       >
-        Setup
+        {t.groups.emptyLeadGoToSetup}
       </span>{" "}
-      und starte die Simulation, um die Wahrscheinlichkeiten zu sehen.
+      {t.groups.emptyTail}
     </InfoBanner>
   );
 }

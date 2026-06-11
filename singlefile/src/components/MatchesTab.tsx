@@ -3,18 +3,20 @@ import type { Tab } from "@/App";
 import { useStore } from "@/store";
 import { TEAMS } from "@lib/data/teams";
 import { SCHEDULE } from "@lib/data/schedule";
+import { useT, formatScheduleDate } from "@/i18n";
 import { AlgorithmBadge, Button, InfoBanner } from "./ui";
 
 type Filter = "all" | "germany" | { group: string };
 
 const GROUPS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
-export function MatchesTab({ nav: _nav }: { nav: (t: Tab) => void }) {
+export function MatchesTab({ nav: _nav }: { nav: (tab: Tab) => void }) {
   const result = useStore((s) => s.simulationResult);
   const liveResults = useStore((s) => s.liveResults);
   const liveFetchedAt = useStore((s) => s.liveFetchedAt);
   const liveError = useStore((s) => s.liveError);
   const [filter, setFilter] = useState<Filter>("all");
+  const { t, locale, teamName } = useT();
   const N = result?.numSimulations ?? 0;
   const finishedCount = Object.values(liveResults).filter((r) => r.completed).length;
   const liveCount = Object.values(liveResults).filter((r) => !r.completed).length;
@@ -48,15 +50,13 @@ export function MatchesTab({ nav: _nav }: { nav: (t: Tab) => void }) {
         finishedCount={finishedCount}
       />
       <InfoBanner icon="⚽">
-        <strong>Alle 72 Gruppenphasen-Spiele</strong> mit Datum, Anpfiff (MESZ), Stadion.{" "}
-        {result
-          ? "Mit Sieg-Wahrscheinlichkeiten aus der Simulation."
-          : "Starte eine Simulation, um Sieg-Wahrscheinlichkeiten zu sehen."}
+        <strong>{t.matches.bannerStrong}</strong> {t.matches.bannerText}{" "}
+        {result ? t.matches.bannerWithSim : t.matches.bannerNoSim}
       </InfoBanner>
 
       <div className="filter-row">
-        <Button active={isActive("all")} onClick={() => setFilter("all")}>Alle</Button>
-        <Button active={isActive("germany")} onClick={() => setFilter("germany")}>🇩🇪 DFB</Button>
+        <Button active={isActive("all")} onClick={() => setFilter("all")}>{t.matches.filterAll}</Button>
+        <Button active={isActive("germany")} onClick={() => setFilter("germany")}>{t.matches.filterDfb}</Button>
         {GROUPS.map((g) => (
           <Button key={g} active={isActive({ group: g })} onClick={() => setFilter({ group: g })}>
             {g}
@@ -66,7 +66,7 @@ export function MatchesTab({ nav: _nav }: { nav: (t: Tab) => void }) {
 
       {Object.entries(byDate).map(([date, matches]) => (
         <div key={date}>
-          <div className="match-date-header">{date}</div>
+          <div className="match-date-header">{formatScheduleDate(date, locale)}</div>
           {matches.map(({ m, i }) => {
             const lr = liveResults[i];
             const isLive = lr && !lr.completed;
@@ -115,15 +115,15 @@ export function MatchesTab({ nav: _nav }: { nav: (t: Tab) => void }) {
               <div key={i} className={`match-card ${isG ? "is-germany" : ""}`} style={cardStyle}>
                 <div className="match-meta">
                   <span>
-                    {m.time} · Gruppe {m.group}
+                    {m.time} · {t.matches.groupPrefix} {m.group}
                     {isFinished && (
                       <span style={{ marginLeft: 6, padding: "2px 6px", borderRadius: 999, background: "var(--mint)", color: "var(--bg-deep)", fontSize: 9, fontWeight: 800 }}>
-                        ABGEPFIFFEN
+                        {t.matches.pillFinished}
                       </span>
                     )}
                     {isLive && (
                       <span style={{ marginLeft: 6, padding: "2px 6px", borderRadius: 999, background: "var(--germany-red)", color: "#fff", fontSize: 9, fontWeight: 800 }}>
-                        🔴 LIVE {lr!.clock}
+                        {t.matches.pillLive} {lr!.clock}
                       </span>
                     )}
                   </span>
@@ -132,7 +132,7 @@ export function MatchesTab({ nav: _nav }: { nav: (t: Tab) => void }) {
                 <div className="match-teams">
                   <div className="match-team">
                     <span style={{ fontSize: 18 }}>{tA.flag}</span>
-                    <span className="match-team-name">{m.teamA}</span>
+                    <span className="match-team-name">{teamName(m.teamA)}</span>
                   </div>
                   {lr ? (
                     <span style={{ fontSize: 18, fontWeight: 800, color: isFinished ? "var(--mint)" : "#fca5a5", padding: "0 12px", fontVariantNumeric: "tabular-nums" }}>
@@ -142,7 +142,7 @@ export function MatchesTab({ nav: _nav }: { nav: (t: Tab) => void }) {
                     <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-tertiary)", margin: "0 8px" }}>vs</span>
                   )}
                   <div className="match-team right">
-                    <span className="match-team-name">{m.teamB}</span>
+                    <span className="match-team-name">{teamName(m.teamB)}</span>
                     <span style={{ fontSize: 18 }}>{tB.flag}</span>
                   </div>
                 </div>
@@ -177,7 +177,7 @@ export function MatchesTab({ nav: _nav }: { nav: (t: Tab) => void }) {
                       <span>
                         ⌀{" "}
                         <strong style={{ color: "var(--text-primary)" }}>{avgA}:{avgB}</strong>
-                        {" "}({avgTotal} Tore) ·{" "}
+                        {" "}({avgTotal} {t.matches.avgGoals}) ·{" "}
                         <span style={{ color: "var(--mint)" }}>≥4: {pctGe4}%</span>
                         {Number(pctGe6) > 0 && (
                           <>
@@ -199,7 +199,7 @@ export function MatchesTab({ nav: _nav }: { nav: (t: Tab) => void }) {
                   !isFinished &&
                   !isLive && (
                     <div style={{ fontSize: 11, fontStyle: "italic", marginTop: 4, color: "var(--text-tertiary)" }}>
-                      Starte eine Simulation für Sieg-Wahrscheinlichkeiten.
+                      {t.matches.promptForSim}
                     </div>
                   )
                 )}
@@ -223,6 +223,7 @@ function LiveStatusBanner({
   liveCount: number;
   finishedCount: number;
 }) {
+  const { t } = useT();
   if (liveFetchedAt) {
     const d = new Date(liveFetchedAt);
     const hh = String(d.getHours()).padStart(2, "0");
@@ -236,8 +237,9 @@ function LiveStatusBanner({
           border: "1px solid rgba(239, 68, 68, 0.2)", color: "var(--text-secondary)",
         }}
       >
-        🔴 Live-Ergebnisse aktiv · {total} Spiel{total === 1 ? "" : "e"}
-        {liveCount > 0 && <> · {liveCount} läuft jetzt</>} · Stand {hh}:{mm} Uhr
+        {t.matches.liveActive} · {t.matches.liveCount(total)}
+        {liveCount > 0 && <> · {t.matches.liveRunning(liveCount)}</>}
+        {" · "}{t.matches.liveAsOf} {hh}:{mm}
       </div>
     );
   }
@@ -250,10 +252,8 @@ function LiveStatusBanner({
           border: "1px solid var(--border-subtle)", color: "var(--text-tertiary)",
         }}
       >
-        ⚠️ <strong>Live-Ergebnisse benötigen http(s).</strong> Die Datei wurde
-        direkt geöffnet ({typeof location !== "undefined" ? location.protocol : "?"}//)
-        — Browser blockieren dann externe Datenabrufe. Lösung: auf GitHub Pages
-        deployen (siehe README) und über die https-Adresse öffnen.
+        ⚠️ <strong>{t.matches.liveFileContext}</strong>{" "}
+        {t.matches.liveFileContextDetail}
       </div>
     );
   }
@@ -266,8 +266,7 @@ function LiveStatusBanner({
           border: "1px solid var(--border-subtle)", color: "var(--text-tertiary)",
         }}
       >
-        ⚠️ Live-Ergebnisse nicht verfügbar ({liveError}). Beim nächsten Refresh
-        (alle 2 Minuten) wird's erneut versucht.
+        ⚠️ {t.matches.liveError} ({liveError}). {t.matches.liveRetryHint}
       </div>
     );
   }

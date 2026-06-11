@@ -6,43 +6,48 @@ import { TEAMS } from "@lib/data/teams";
 import { SCHEDULE } from "@lib/data/schedule";
 import { MARKT_QUOTEN } from "@lib/data/marktQuoten";
 import { PLAYER_AGGREGATES } from "@lib/data/playerAggregates";
+import { translations, DEFAULT_LOCALE, type Locale } from "@/i18n/translations";
 
 const MIN_OVERLAY_MS = 2500;
 
-function simPhaseFor(p: number): string {
-  if (p < 0.05) return "📊 9 Faktoren werden gewichtet ...";
-  if (p < 0.3) return "⚽ Gruppenphase wird simuliert ...";
-  if (p < 0.55) return "🏟️ Achtel- und Viertelfinale ...";
-  if (p < 0.8) return "🔥 Halbfinale & Finale ...";
-  return "📈 Wahrscheinlichkeiten aggregieren ...";
-}
-function sensPhaseFor(p: number): string {
-  if (p < 0.3) return "🎲 Faktoren werden zufällig variiert ...";
-  if (p < 0.6) return "⚽ Alternative Szenarien werden gespielt ...";
-  if (p < 0.9) return "📊 Streuung wird gemessen ...";
-  return "📈 Quantile werden berechnet ...";
+function dict(locale: Locale | null) {
+  return translations[locale ?? DEFAULT_LOCALE];
 }
 
-/**
- * Single-File-Build: Sim läuft synchron im Main-Thread (kein Web Worker).
- *
- * Warum kein Worker? Bei `file://`-Origin haben Browser strikte Restriktionen
- * für Module-Workers mit Data-URL. Synchron mit `await Promise.resolve()`-
- * Yields hält die UI bei 5K–100K Sims responsiv genug. Für 1 Mio Sims wäre
- * ein echter Worker besser — diesen Use-Case bedient die Next.js-Variante
- * (frontend/) mit echtem Web Worker.
- */
+function simPhaseFor(p: number, locale: Locale | null): string {
+  const phases = dict(locale).loading.simPhases;
+  if (p < 0.05) return phases.weighting;
+  if (p < 0.3) return phases.groupStage;
+  if (p < 0.55) return phases.ro16;
+  if (p < 0.8) return phases.semiFinal;
+  return phases.aggregating;
+}
+function sensPhaseFor(p: number, locale: Locale | null): string {
+  const phases = dict(locale).loading.sensPhases;
+  if (p < 0.3) return phases.varying;
+  if (p < 0.6) return phases.scenarios;
+  if (p < 0.9) return phases.variance;
+  return phases.quantiles;
+}
+
+function localeNum(locale: Locale | null): string {
+  return (locale ?? DEFAULT_LOCALE) === "de" ? "de-DE" : "en-US";
+}
+
 export function useRunSimulation(onDone?: () => void) {
   return useCallback(async () => {
     const s = useStore.getState();
+    const locale = s.locale;
+    const t = dict(locale);
+    const lng = localeNum(locale);
     const N = selectNumSimulations(s);
     const start = Date.now();
 
     s.setLoading({
       kind: "simulation",
-      phase: "🏟️ Stadien werden geöffnet ...",
+      phase: t.loading.simPhases.stadiums,
       progress: 0,
-      counterText: `0 / ${N.toLocaleString("de-DE")}`,
+      counterText: `0 / ${N.toLocaleString(lng)}`,
     });
 
     await new Promise((r) => setTimeout(r, 350));
@@ -66,8 +71,8 @@ export function useRunSimulation(onDone?: () => void) {
         if (changePhase) lastPhaseChange = now;
         useStore.getState().setLoading({
           progress: p,
-          counterText: `${done.toLocaleString("de-DE")} / ${N.toLocaleString("de-DE")} Turniere`,
-          ...(changePhase ? { phase: simPhaseFor(p) } : {}),
+          counterText: `${done.toLocaleString(lng)} / ${N.toLocaleString(lng)} ${t.loading.tournamentsLabel}`,
+          ...(changePhase ? { phase: simPhaseFor(p, locale) } : {}),
         });
       },
     });
@@ -75,15 +80,15 @@ export function useRunSimulation(onDone?: () => void) {
     const elapsed = Date.now() - start;
     if (elapsed < MIN_OVERLAY_MS) {
       useStore.getState().setLoading({
-        phase: "✨ Ergebnisse werden ausgewertet ...",
+        phase: t.loading.simPhases.evaluating,
         progress: 1,
-        counterText: `${N.toLocaleString("de-DE")} / ${N.toLocaleString("de-DE")} ✓`,
+        counterText: `${N.toLocaleString(lng)} / ${N.toLocaleString(lng)} ✓`,
       });
       await new Promise((r) => setTimeout(r, MIN_OVERLAY_MS - elapsed));
     }
 
     useStore.getState().setSimulationResult(result);
-    useStore.getState().setLoading({ phase: "✅ Simulation abgeschlossen!" });
+    useStore.getState().setLoading({ phase: t.loading.simPhases.complete });
     await new Promise((r) => setTimeout(r, 400));
     useStore.getState().resetLoading();
     onDone?.();
@@ -93,13 +98,15 @@ export function useRunSimulation(onDone?: () => void) {
 export function useRunSensitivity() {
   return useCallback(async () => {
     const s = useStore.getState();
+    const locale = s.locale;
+    const t = dict(locale);
     const N_PERT = 20;
     const N_SUB = 500;
     const start = Date.now();
 
     s.setLoading({
       kind: "sensitivity",
-      phase: "🎲 Zufalls-Variationen werden vorbereitet ...",
+      phase: t.loading.sensPhases.preparing,
       progress: 0,
       counterText: `0 / ${N_PERT}`,
     });
@@ -127,8 +134,8 @@ export function useRunSensitivity() {
         if (changePhase) lastPhaseChange = now;
         useStore.getState().setLoading({
           progress: p,
-          counterText: `Perturbation ${done} / ${N_PERT}`,
-          ...(changePhase ? { phase: sensPhaseFor(p) } : {}),
+          counterText: t.loading.perturbation(done, N_PERT),
+          ...(changePhase ? { phase: sensPhaseFor(p, locale) } : {}),
         });
       },
     });
@@ -136,14 +143,14 @@ export function useRunSensitivity() {
     const elapsed = Date.now() - start;
     if (elapsed < MIN_OVERLAY_MS) {
       useStore.getState().setLoading({
-        phase: "✨ Box-Plots werden gezeichnet ...",
+        phase: t.loading.sensPhases.drawing,
         progress: 1,
       });
       await new Promise((r) => setTimeout(r, MIN_OVERLAY_MS - elapsed));
     }
 
     useStore.getState().setSensitivityResult(result);
-    useStore.getState().setLoading({ phase: "✅ Analyse abgeschlossen!" });
+    useStore.getState().setLoading({ phase: t.loading.sensPhases.complete });
     await new Promise((r) => setTimeout(r, 400));
     useStore.getState().resetLoading();
   }, []);
