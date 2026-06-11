@@ -1,0 +1,68 @@
+name: Deploy GitHub Pages
+
+# Baut die Single-File-HTML aus singlefile/ und veröffentlicht sie auf
+# GitHub Pages. Triggert bei jedem Push auf main und manuell.
+#
+# Setup im Repository:
+# 1. Settings → Pages → Source: GitHub Actions
+# 2. Settings → Actions → Workflow permissions: Read and write
+# Nach dem ersten erfolgreichen Lauf ist die App erreichbar unter
+# https://<owner>.github.io/<repo>/
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install singlefile deps
+        working-directory: singlefile
+        run: npm ci
+
+      - name: Build single-file HTML
+        working-directory: singlefile
+        run: npm run build
+
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site
+          cp singlefile/dist/index.html _site/index.html
+          # 404.html als Copy für Direct-Open-Verhalten
+          cp singlefile/dist/index.html _site/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

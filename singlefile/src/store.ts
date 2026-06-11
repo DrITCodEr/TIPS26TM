@@ -6,6 +6,7 @@ import type {
 import type { FactorWeights } from "@lib/types/factors";
 import { PRESETS, type PresetKey } from "@lib/data/presets";
 import type { SensitivityResult } from "@lib/algorithms/sensitivity";
+import type { LiveMatchState } from "@/espn";
 
 export const SIM_LEVELS = [
   1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000,
@@ -37,6 +38,11 @@ interface State {
   dispersionPercent: number;
   /** 🇩🇪 Easter-Egg: DFB-Spiele werden deterministisch 3:0 für Deutschland. */
   dfbAlwaysWins: boolean;
+
+  // Live-Daten von ESPN (live-fetched, kein Build-Zeit-Snapshot)
+  liveResults: Record<number, LiveMatchState>;
+  liveFetchedAt: number | null; // Unix-Timestamp (ms) für Server-Render-Safety
+  liveError: string | null;
   simulationResult: SimulationResult | null;
   sensitivityResult: SensitivityResult | null;
   loading: LoadingState;
@@ -58,6 +64,11 @@ interface State {
   resetLoading: () => void;
   setBacktestYear: (y: 2014 | 2018 | 2022) => void;
   setBacktestAlgorithm: (a: "v1" | "v2-nomarket") => void;
+  setLiveResults: (
+    r: Record<number, LiveMatchState>,
+    fetchedAt: number,
+  ) => void;
+  setLiveError: (e: string | null) => void;
 }
 
 export const useStore = create<State>((set) => ({
@@ -74,6 +85,10 @@ export const useStore = create<State>((set) => ({
   loading: initialLoading,
   backtestYear: 2022,
   backtestAlgorithm: "v1",
+
+  liveResults: {},
+  liveFetchedAt: null,
+  liveError: null,
 
   setAlgorithm: (algorithm) => set({ algorithm }),
   setWeight: (k, v) =>
@@ -92,6 +107,9 @@ export const useStore = create<State>((set) => ({
   resetLoading: () => set({ loading: initialLoading }),
   setBacktestYear: (y) => set({ backtestYear: y }),
   setBacktestAlgorithm: (a) => set({ backtestAlgorithm: a }),
+  setLiveResults: (r, fetchedAt) =>
+    set({ liveResults: r, liveFetchedAt: fetchedAt, liveError: null }),
+  setLiveError: (e) => set({ liveError: e }),
 }));
 
 export function selectNumSimulations(state: { numSimulationsIdx: number }): number {

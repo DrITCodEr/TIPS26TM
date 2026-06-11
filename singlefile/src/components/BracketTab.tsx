@@ -1,17 +1,34 @@
 import type { Tab } from "@/App";
+import { useStore } from "@/store";
 import { TEAMS } from "@lib/data/teams";
 import { SCHEDULE } from "@lib/data/schedule";
-import { LIVE_RESULTS, LIVE_RESULTS_UPDATED_AT } from "@lib/data/liveResults";
 import { computeLiveStandings } from "@lib/algorithms/liveStandings";
 import { deriveLiveBracket } from "@lib/algorithms/liveBracket";
 import { slotLabel } from "@lib/algorithms/fifaBracket";
+import type { LiveMatchResult } from "@lib/data/liveResults";
 import { Card, InfoBanner, SectionTitle } from "./ui";
 
 export function BracketTab({ onBack }: { onBack: (t: Tab) => void }) {
-  const standings = computeLiveStandings(LIVE_RESULTS, SCHEDULE, TEAMS);
+  const liveState = useStore((s) => s.liveResults);
+  const liveFetchedAt = useStore((s) => s.liveFetchedAt);
+
+  // Adapter: ESPN-LiveMatchState → unsere LiveMatchResult (für Standings + Bracket)
+  const liveAsResult: Record<number, LiveMatchResult> = {};
+  for (const k of Object.keys(liveState)) {
+    const idx = Number(k);
+    const lr = liveState[idx];
+    if (!lr.completed) continue;
+    liveAsResult[idx] = {
+      goalsA: lr.scoreA,
+      goalsB: lr.scoreB,
+      isFinished: true,
+    };
+  }
+
+  const standings = computeLiveStandings(liveAsResult, SCHEDULE, TEAMS);
   const bracket = deriveLiveBracket(standings);
   const allFinished = bracket.every((m) => m.a.resolvedTeamIdx !== null);
-  const finishedCount = Object.values(LIVE_RESULTS).filter((r) => r.isFinished).length;
+  const finishedCount = Object.keys(liveAsResult).length;
 
   return (
     <section>
@@ -22,9 +39,10 @@ export function BracketTab({ onBack }: { onBack: (t: Tab) => void }) {
           : `Slot-Labels gemäß offizieller FIFA-Tabelle. ${finishedCount} / 72 Gruppenspielen aktualisiert. Sobald die Gruppenphase fertig ist, fülle ich die Slots automatisch.`}
       </InfoBanner>
 
-      {LIVE_RESULTS_UPDATED_AT && (
+      {liveFetchedAt && (
         <div style={{ fontSize: 10, marginBottom: 12, padding: "0 4px", color: "var(--text-tertiary)" }}>
-          Live-Daten zuletzt aktualisiert: {LIVE_RESULTS_UPDATED_AT}
+          Live-Daten zuletzt aktualisiert:{" "}
+          {new Date(liveFetchedAt).toLocaleTimeString("de-DE")}
         </div>
       )}
 

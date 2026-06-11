@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/store";
+import { fetchLiveFromEspn, IS_FILE_CONTEXT } from "@/espn";
 import { TEAMS } from "@lib/data/teams";
 import { SetupTab } from "@/components/SetupTab";
 import { RankingTab } from "@/components/RankingTab";
@@ -163,6 +164,33 @@ export function App() {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [tab]);
+
+  // Live-Ergebnisse von ESPN holen — initial + alle 2 Minuten
+  useEffect(() => {
+    const setLiveResults = useStore.getState().setLiveResults;
+    const setLiveError = useStore.getState().setLiveError;
+    if (IS_FILE_CONTEXT) {
+      setLiveError("file-context");
+      return;
+    }
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const { results, fetchedAt } = await fetchLiveFromEspn();
+        if (cancelled) return;
+        setLiveResults(results, fetchedAt.getTime());
+      } catch (e) {
+        if (cancelled) return;
+        setLiveError(e instanceof Error ? e.message : String(e));
+      }
+    };
+    run();
+    const id = window.setInterval(run, 120_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
 
   // Bequemer Helper: andere Tabs aus den Tab-Komponenten anspringen
   const nav = setTab;
