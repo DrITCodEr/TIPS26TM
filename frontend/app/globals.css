@@ -1,0 +1,302 @@
+@import "tailwindcss";
+
+/* ============================================================
+   TIPS-26 Design Tokens (aus Prototyp / Spec §7)
+   ============================================================ */
+:root {
+  /* Backgrounds */
+  --bg-deep: #050d1a;
+  --bg-primary: #0a1628;
+  --bg-secondary: #122544;
+  --bg-tertiary: #1a3258;
+  --bg-card: rgba(20, 41, 71, 0.6);
+
+  /* Mint accent */
+  --mint: #5eead4;
+  --mint-bright: #6ffae4;
+  --mint-dark: #2dd4bf;
+  --mint-soft: rgba(94, 234, 212, 0.12);
+  --mint-glow: rgba(94, 234, 212, 0.35);
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #b8c5d6;
+  --text-tertiary: #6b7c9a;
+  --text-quaternary: #475569;
+
+  /* Borders */
+  --border-subtle: rgba(94, 234, 212, 0.15);
+  --border-mid: rgba(94, 234, 212, 0.25);
+
+  /* Status / accents */
+  --germany-red: #ef4444;
+  --gold: #fbbf24;
+  --silver: #94a3b8;
+  --bronze: #d97706;
+  --orange: #f97316;
+
+  /* Shadows */
+  --shadow-mint: 0 8px 32px rgba(94, 234, 212, 0.25);
+
+  /* Radius */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+}
+
+@theme inline {
+  --color-bg-deep: var(--bg-deep);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-mint: var(--mint);
+  --color-mint-bright: var(--mint-bright);
+  --color-mint-dark: var(--mint-dark);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-quaternary: var(--text-quaternary);
+  --color-germany-red: var(--germany-red);
+  --color-gold: var(--gold);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
+  --color-orange: var(--orange);
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto,
+    sans-serif;
+}
+
+/* ============================================================
+   Base resets
+   ============================================================ */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   Phone-Frame (Desktop: zentriertes Phone, Mobile: full-screen)
+   ============================================================ */
+.app-frame {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg-primary);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 481px) {
+  body {
+    background: radial-gradient(
+      ellipse at top,
+      #0d1f3a 0%,
+      var(--bg-deep) 60%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .app-frame {
+    height: 96vh;
+    max-height: 920px;
+    border-radius: 44px;
+    box-shadow:
+      0 0 0 12px #0a1628,
+      0 0 0 13px #2a3e5f,
+      0 50px 100px rgba(0, 0, 0, 0.5),
+      0 0 80px rgba(94, 234, 212, 0.08);
+  }
+}
+
+/* Zig-Zag-Hintergrund */
+.zigzag-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0,
+    transparent 60px,
+    rgba(94, 234, 212, 0.025) 60px,
+    rgba(94, 234, 212, 0.025) 62px,
+    transparent 62px,
+    transparent 120px,
+    rgba(94, 234, 212, 0.04) 120px,
+    rgba(94, 234, 212, 0.04) 122px
+  );
+}
+
+/* Hide scrollbars in the scroll container */
+.scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 20px 130px;
+  position: relative;
+  z-index: 2;
+  scrollbar-width: none;
+}
+.scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================
+   Custom Range Slider mit Mint-Gradient-Fill
+   ============================================================ */
+.tips-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    var(--mint) var(--val, 50%),
+    var(--bg-tertiary) var(--val, 50%)
+  );
+  outline: none;
+  cursor: pointer;
+}
+.tips-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 12px var(--mint-glow);
+  cursor: pointer;
+  border: none;
+}
+.tips-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 12px var(--mint-glow);
+  cursor: pointer;
+  border: none;
+}
+
+/* ============================================================
+   Loading Overlay
+   ============================================================ */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: rgba(5, 13, 26, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.loading-overlay.active {
+  display: flex;
+  animation: overlayFadeIn 0.25s ease;
+}
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.loading-stage {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loading-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--mint);
+  opacity: 0;
+  animation: pulseRing 2s ease-out infinite;
+}
+.loading-pulse-ring.delay-1 { animation-delay: 0.5s; }
+.loading-pulse-ring.delay-2 { animation-delay: 1s; }
+@keyframes pulseRing {
+  0% { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.loading-ball {
+  font-size: 44px;
+  animation: ballSpin 2.4s linear infinite;
+  filter: drop-shadow(0 0 12px var(--mint-glow));
+}
+@keyframes ballSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-flags {
+  display: flex;
+  gap: 14px;
+  font-size: 22px;
+}
+.loading-flag {
+  transition: transform 0.2s ease;
+}
+
+.loading-phase {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  min-height: 18px;
+  transition: opacity 0.3s ease;
+}
+.loading-counter {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--mint);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.loading-progress {
+  width: 220px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-tertiary);
+  overflow: hidden;
+}
+.loading-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--mint-dark), var(--mint));
+  border-radius: 2px;
+  transition: width 0.15s ease;
+}
+.loading-tagline {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}

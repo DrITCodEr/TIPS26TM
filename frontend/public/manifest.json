@@ -1,0 +1,20 @@
+{
+  "name": "TIPS-26™ · WM 2026 Vorhersage",
+  "short_name": "TIPS-26",
+  "description": "Probabilistische Vorhersagen für die FIFA WM 2026 — Monte-Carlo-Simulation mit 9-Faktoren-Ensemble nach Maher (1982), Dixon-Coles (1997) und Groll et al. (2019).",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a1628",
+  "theme_color": "#0a1628",
+  "categories": ["sports", "utilities"],
+  "lang": "de",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}
