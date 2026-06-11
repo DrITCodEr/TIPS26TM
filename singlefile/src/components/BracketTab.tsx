@@ -6,13 +6,14 @@ import { computeLiveStandings } from "@lib/algorithms/liveStandings";
 import { deriveLiveBracket } from "@lib/algorithms/liveBracket";
 import { slotLabel } from "@lib/algorithms/fifaBracket";
 import type { LiveMatchResult } from "@lib/data/liveResults";
+import { useT } from "@/i18n";
 import { Card, InfoBanner, SectionTitle } from "./ui";
 
 export function BracketTab({ onBack }: { onBack: (t: Tab) => void }) {
   const liveState = useStore((s) => s.liveResults);
   const liveFetchedAt = useStore((s) => s.liveFetchedAt);
+  const { t, locale, teamName } = useT();
 
-  // Adapter: ESPN-LiveMatchState → unsere LiveMatchResult (für Standings + Bracket)
   const liveAsResult: Record<number, LiveMatchResult> = {};
   for (const k of Object.keys(liveState)) {
     const idx = Number(k);
@@ -33,20 +34,18 @@ export function BracketTab({ onBack }: { onBack: (t: Tab) => void }) {
   return (
     <section>
       <InfoBanner icon="🏆">
-        <strong>K.o.-Bracket nach FIFA-Schema.</strong>{" "}
-        {allFinished
-          ? "Alle Gruppenspiele abgeschlossen — die R32-Paarungen sind final."
-          : `Slot-Labels gemäß offizieller FIFA-Tabelle. ${finishedCount} / 72 Gruppenspielen aktualisiert. Sobald die Gruppenphase fertig ist, fülle ich die Slots automatisch.`}
+        <strong>{t.bracket.bannerStrong}</strong>{" "}
+        {allFinished ? t.bracket.bannerAllDone : t.bracket.bannerProgress(finishedCount)}
       </InfoBanner>
 
       {liveFetchedAt && (
         <div style={{ fontSize: 10, marginBottom: 12, padding: "0 4px", color: "var(--text-tertiary)" }}>
-          Live-Daten zuletzt aktualisiert:{" "}
-          {new Date(liveFetchedAt).toLocaleTimeString("de-DE")}
+          {t.bracket.lastUpdate}{" "}
+          {new Date(liveFetchedAt).toLocaleTimeString(locale === "de" ? "de-DE" : "en-US")}
         </div>
       )}
 
-      <SectionTitle>🎯 Sechzehntelfinale (R32)</SectionTitle>
+      <SectionTitle>{t.bracket.r32Title}</SectionTitle>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {bracket.map((m) => {
           const a = m.a;
@@ -56,7 +55,7 @@ export function BracketTab({ onBack }: { onBack: (t: Tab) => void }) {
           return (
             <Card key={m.matchNo}>
               <div style={{ fontSize: 10, marginBottom: 6, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-tertiary)" }}>
-                R32 · Match {m.matchNo}
+                {t.bracket.r32Match} {m.matchNo}
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
@@ -64,7 +63,7 @@ export function BracketTab({ onBack }: { onBack: (t: Tab) => void }) {
                   <div style={{ minWidth: 0 }}>
                     {teamA ? (
                       <>
-                        <div style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{teamA.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{teamName(teamA.name)}</div>
                         <div style={{ fontSize: 9, color: "var(--text-tertiary)" }}>{slotLabel(a.slot)}</div>
                       </>
                     ) : (
@@ -72,12 +71,12 @@ export function BracketTab({ onBack }: { onBack: (t: Tab) => void }) {
                     )}
                   </div>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, margin: "0 8px", color: "var(--text-tertiary)" }}>vs</span>
+                <span style={{ fontSize: 11, fontWeight: 700, margin: "0 8px", color: "var(--text-tertiary)" }}>{t.bracket.vs}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
                   <div style={{ minWidth: 0, textAlign: "right" }}>
                     {teamB ? (
                       <>
-                        <div style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{teamB.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{teamName(teamB.name)}</div>
                         <div style={{ fontSize: 9, color: "var(--text-tertiary)" }}>{slotLabel(b.slot)}</div>
                       </>
                     ) : (
@@ -92,16 +91,16 @@ export function BracketTab({ onBack }: { onBack: (t: Tab) => void }) {
         })}
       </div>
 
-      <SectionTitle>📅 Bracket-Termine</SectionTitle>
+      <SectionTitle>{t.bracket.datesTitle}</SectionTitle>
       <Card>
         <div style={{ display: "grid", gap: 8, fontSize: 12 }}>
           {[
-            ["R32 (Sechzehntelfinale)", "28. Juni – 02. Juli"],
-            ["R16 (Achtelfinale)", "04. – 07. Juli"],
-            ["Viertelfinale", "09. – 11. Juli"],
-            ["Halbfinale", "14. – 15. Juli"],
-            ["Spiel um Platz 3", "18. Juli"],
-            ["🏆 Finale", "19. Juli, 21:00 MESZ · MetLife Stadium"],
+            [t.bracket.dateR32, t.bracket.dateR32V],
+            [t.bracket.dateR16, t.bracket.dateR16V],
+            [t.bracket.dateQF, t.bracket.dateQFV],
+            [t.bracket.dateSF, t.bracket.dateSFV],
+            [t.bracket.date3rd, t.bracket.date3rdV],
+            [t.bracket.dateFinal, t.bracket.dateFinalV],
           ].map(([l, v]) => (
             <div key={l} style={{ display: "flex", justifyContent: "space-between" }}>
               <span style={{ color: "var(--text-secondary)" }}>{l}</span>
@@ -116,7 +115,7 @@ export function BracketTab({ onBack }: { onBack: (t: Tab) => void }) {
           style={{ fontSize: 11, fontWeight: 700, color: "var(--mint)", textDecoration: "underline", cursor: "pointer" }}
           onClick={() => onBack("home")}
         >
-          ← Zurück zur Übersicht
+          {t.bracket.back}
         </span>
       </div>
     </section>

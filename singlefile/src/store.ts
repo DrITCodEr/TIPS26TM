@@ -7,6 +7,8 @@ import type { FactorWeights } from "@lib/types/factors";
 import { PRESETS, type PresetKey } from "@lib/data/presets";
 import type { SensitivityResult } from "@lib/algorithms/sensitivity";
 import type { LiveMatchState } from "@/espn";
+import type { Locale } from "@/i18n/translations";
+import { loadStoredLocale, storeLocale } from "@/i18n";
 
 export const SIM_LEVELS = [
   1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000,
@@ -43,6 +45,9 @@ interface State {
   liveResults: Record<number, LiveMatchState>;
   liveFetchedAt: number | null; // Unix-Timestamp (ms) für Server-Render-Safety
   liveError: string | null;
+
+  // Spracheinstellung. null = noch nicht gewählt → Splash zeigen.
+  locale: Locale | null;
   simulationResult: SimulationResult | null;
   sensitivityResult: SensitivityResult | null;
   loading: LoadingState;
@@ -69,6 +74,7 @@ interface State {
     fetchedAt: number,
   ) => void;
   setLiveError: (e: string | null) => void;
+  setLocale: (l: Locale) => void;
 }
 
 export const useStore = create<State>((set) => ({
@@ -90,6 +96,8 @@ export const useStore = create<State>((set) => ({
   liveFetchedAt: null,
   liveError: null,
 
+  locale: loadStoredLocale(),
+
   setAlgorithm: (algorithm) => set({ algorithm }),
   setWeight: (k, v) =>
     set((s) => ({ weights: { ...s.weights, [k]: v }, activePreset: null })),
@@ -110,6 +118,10 @@ export const useStore = create<State>((set) => ({
   setLiveResults: (r, fetchedAt) =>
     set({ liveResults: r, liveFetchedAt: fetchedAt, liveError: null }),
   setLiveError: (e) => set({ liveError: e }),
+  setLocale: (l) => {
+    storeLocale(l);
+    set({ locale: l });
+  },
 }));
 
 export function selectNumSimulations(state: { numSimulationsIdx: number }): number {

@@ -11,9 +11,10 @@ import {
   type HistoricalYear,
 } from "@lib/data/historical";
 import { PRESETS } from "@lib/data/presets";
+import { useT } from "@/i18n";
 import { Button, Card, InfoBanner, SectionTitle } from "./ui";
 
-function metric(label: string, value: string, hint?: string) {
+function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div style={{ textAlign: "center", padding: 12, borderRadius: 12, background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
       <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-tertiary)" }}>{label}</div>
@@ -28,6 +29,7 @@ export function BacktestTab({ onBack }: { onBack: () => void }) {
   const algorithm = useStore((s) => s.backtestAlgorithm);
   const setYear = useStore((s) => s.setBacktestYear);
   const setAlgorithm = useStore((s) => s.setBacktestAlgorithm);
+  const { t } = useT();
 
   const tournament = HISTORICAL_TOURNAMENTS[year];
   const report = useMemo(
@@ -39,75 +41,80 @@ export function BacktestTab({ onBack }: { onBack: () => void }) {
     [tournament],
   );
 
+  const phaseLabels: Record<string, string> = {
+    r16: t.backtest.phaseR16,
+    qf: t.backtest.phaseQF,
+    sf: t.backtest.phaseSF,
+    "3rd": t.backtest.phase3rd,
+    final: t.backtest.phaseFinal,
+  };
+
   return (
     <section>
       <InfoBanner icon="🔬">
-        <strong>Historisches Backtesting.</strong> Wie gut hätte TIPS-26 mit Pre-Turnier-Daten den Verlauf der WMs 2014/18/22 vorhergesagt?
+        <strong>{t.backtest.bannerStrong}</strong> {t.backtest.bannerText}
       </InfoBanner>
 
-      <SectionTitle>🏆 Turnier wählen</SectionTitle>
+      <SectionTitle>{t.backtest.selectTournament}</SectionTitle>
       <div className="filter-row">
         {HISTORICAL_YEARS.map((y) => (
           <Button key={y} active={year === y} onClick={() => setYear(y as HistoricalYear)}>
-            WM {y} · {HISTORICAL_TOURNAMENTS[y].host}
+            {t.backtest.yearWMHost(y, HISTORICAL_TOURNAMENTS[y].host)}
           </Button>
         ))}
       </div>
 
-      <SectionTitle>🧮 Algorithmus</SectionTitle>
+      <SectionTitle>{t.backtest.selectAlgo}</SectionTitle>
       <div className="filter-row">
         <Button active={algorithm === "v1"} onClick={() => setAlgorithm("v1" as BacktestAlgorithm)}>
           TIPS-26.1
         </Button>
         <Button active={algorithm === "v2-nomarket"} onClick={() => setAlgorithm("v2-nomarket" as BacktestAlgorithm)}>
-          TIPS-26.2 ohne Markt
+          TIPS-26.2
         </Button>
       </div>
       <div style={{ fontSize: 10, marginTop: 4, color: "var(--text-tertiary)" }}>
-        v2 Advanced braucht Pre-Turnier-Bookmaker-Quoten (haben wir nicht). Daher hier ohne Markt-Blend.
+        {t.backtest.algoHint}
       </div>
 
-      <SectionTitle>📊 Aggregierte Metriken (K.o.-Phase)</SectionTitle>
+      <SectionTitle>{t.backtest.metricsTitle}</SectionTitle>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-        {metric("Brier", report.metrics.brier.toFixed(3), "↓ besser")}
-        {metric("Log-Loss", report.metrics.logLoss.toFixed(3), "↓ besser")}
-        {metric("RPS", report.metrics.rps.toFixed(3), "↓ besser")}
-        {metric("Acc", `${(report.metrics.accuracy * 100).toFixed(0)}%`, "↑ besser")}
+        <Metric label={t.backtest.brier} value={report.metrics.brier.toFixed(3)} hint={t.backtest.lowerBetter} />
+        <Metric label={t.backtest.logloss} value={report.metrics.logLoss.toFixed(3)} hint={t.backtest.lowerBetter} />
+        <Metric label={t.backtest.rps} value={report.metrics.rps.toFixed(3)} hint={t.backtest.lowerBetter} />
+        <Metric label={t.backtest.acc} value={`${(report.metrics.accuracy * 100).toFixed(0)}%`} hint={t.backtest.higherBetter} />
       </div>
       <div style={{ fontSize: 10, marginTop: 8, padding: "0 4px", color: "var(--text-tertiary)" }}>
-        N = {report.metrics.count} K.o.-Spiele · Random-Baseline: Brier ≈ 0.667 · Log-Loss ≈ 1.099
+        {t.backtest.nKO(report.metrics.count)}
       </div>
 
-      <SectionTitle>🥇 Champion-Ranking (Pre-Turnier)</SectionTitle>
+      <SectionTitle>{t.backtest.rankingTitle}</SectionTitle>
       <Card>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text-tertiary)" }}>Tatsächlicher Champion</div>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text-tertiary)" }}>{t.backtest.actualChampion}</div>
             <div style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>{tournament.champion}</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--mint)" }}>
-              Modell-Rang: {champInfo.championRank}/{tournament.teams.length}
+              {t.backtest.modelRank} {champInfo.championRank}/{tournament.teams.length}
             </div>
           </div>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text-tertiary)" }}>Finalist</div>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: "var(--text-tertiary)" }}>{t.backtest.runnerUp}</div>
             <div style={{ fontSize: 14, fontWeight: 800, marginTop: 4 }}>{tournament.runnerUp}</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--mint)" }}>
-              Modell-Rang: {champInfo.runnerUpRank}/{tournament.teams.length}
+              {t.backtest.modelRank} {champInfo.runnerUpRank}/{tournament.teams.length}
             </div>
           </div>
         </div>
         <div style={{ marginTop: 12, paddingTop: 12, fontSize: 11, color: "var(--text-secondary)", borderTop: "1px solid var(--border-subtle)" }}>
-          Halbfinalisten: <strong>{tournament.semiFinalists[0]}</strong> (Rang {champInfo.sfRanks[0]}) · <strong>{tournament.semiFinalists[1]}</strong> (Rang {champInfo.sfRanks[1]})
+          {t.backtest.semiFinalists} <strong>{tournament.semiFinalists[0]}</strong> ({t.backtest.modelRank.replace(":", "")} {champInfo.sfRanks[0]}) · <strong>{tournament.semiFinalists[1]}</strong> ({t.backtest.modelRank.replace(":", "")} {champInfo.sfRanks[1]})
         </div>
       </Card>
 
-      <SectionTitle>📈 Per-Match-Forecasts</SectionTitle>
+      <SectionTitle>{t.backtest.perMatchTitle}</SectionTitle>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {report.perMatch.map((p, i) => {
           const m = p.match;
-          const phaseLabels: Record<string, string> = {
-            r16: "1/8", qf: "1/4", sf: "1/2", "3rd": "Spiel um 3.", final: "Finale",
-          };
           const a = (p.forecast.winA * 100).toFixed(0);
           const x = (p.forecast.draw * 100).toFixed(0);
           const b = (p.forecast.winB * 100).toFixed(0);
@@ -153,7 +160,7 @@ export function BacktestTab({ onBack }: { onBack: () => void }) {
                     })}
                   </div>
                   <div style={{ fontSize: 9, fontWeight: 700, color: correct ? "var(--mint)" : "var(--orange)" }}>
-                    {correct ? "✓ getroffen" : "✗ verfehlt"}
+                    {correct ? t.backtest.hit : t.backtest.miss}
                   </div>
                 </div>
               </div>
@@ -163,7 +170,7 @@ export function BacktestTab({ onBack }: { onBack: () => void }) {
       </div>
 
       <InfoBanner icon="⚠️" tone="warning" style={{ marginTop: 16 }}>
-        <strong>Daten-Qualität:</strong> Pre-Turnier-Snapshots sind Demo-Annäherungen (Roadmap §9.3).
+        <strong>{t.backtest.dataQualityWarn}</strong>
       </InfoBanner>
 
       <div style={{ marginTop: 16, textAlign: "center" }}>
@@ -171,7 +178,7 @@ export function BacktestTab({ onBack }: { onBack: () => void }) {
           style={{ fontSize: 11, fontWeight: 700, color: "var(--mint)", textDecoration: "underline", cursor: "pointer" }}
           onClick={onBack}
         >
-          ← Zurück zur Übersicht
+          {t.backtest.back}
         </span>
       </div>
     </section>

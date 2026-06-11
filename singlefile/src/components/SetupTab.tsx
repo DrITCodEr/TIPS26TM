@@ -6,65 +6,32 @@ import {
 } from "@/store";
 import { useRunSimulation } from "@/runHooks";
 import { FAKTOREN } from "@lib/data/factors";
-import { PRESET_LABELS, PRESETS, type PresetKey } from "@lib/data/presets";
+import { PRESETS, type PresetKey } from "@lib/data/presets";
 import type { AlgorithmVersion } from "@lib/types/simulation";
+import { useT, LOCALES, LOCALE_FLAG, LOCALE_LABEL } from "@/i18n";
 import { Button, Card, InfoBanner, SectionTitle, formatSimCount } from "./ui";
-
-const ALGO_INFO: Record<
-  AlgorithmVersion,
-  { title: string; tag: string; desc: string; details: string }
-> = {
-  v1: {
-    title: "TIPS-26.1", tag: "Classic", desc: "9-Faktor linear · add. Poisson",
-    details:
-      "Lineare gewichtete Aggregation der 9 Faktoren · additive Poisson-Tor-Formel <code>λ = 1.4 + Δ·3.5</code>.",
-  },
-  v2: {
-    title: "TIPS-26.2", tag: "Advanced", desc: "Log-linear · Dixon-Coles · Markt",
-    details:
-      "Forschungs-basiert (Maher 1982 / Dixon-Coles 1997 / Groll et al. 2019):<br/>" +
-      "• Log-lineare Tor-Formel <code>λ = exp(c + Δ·s)</code><br/>" +
-      "• Dixon-Coles τ-Korrektur (mehr 1:1)<br/>" +
-      "• Markt-Konsens-Blend (70 % TIPS + 30 % Bookmaker)<br/>" +
-      "• Composite-Score ELO+FIFA+Markt<br/>" +
-      "• Nicht-linearer Boost für Top-Form-Teams",
-  },
-  v3: {
-    title: "TIPS-26.3", tag: "Player", desc: "v2 + Player-Aggregates",
-    details:
-      "v2 + Player-Level-Features (Stübinger 2020):<br/>" +
-      "• Top-11-Marktwert<br/>• %-Top-5-Ligen<br/>• UCL-Spieler<br/>" +
-      "• Squad-xG / xGA<br/>• GK Post-Shot xG Save %<br/>" +
-      "Blend 70 % v2 + 30 % Player-Composite. <strong>Demo-Daten.</strong>",
-  },
-  v4: {
-    title: "TIPS-26.4", tag: "Ensemble", desc: "Stacking v1+v2+v3",
-    details:
-      "Ensemble-Stacking nach §9.13:<br/>" +
-      "<code>final = 0.15·v1 + 0.45·v2 + 0.40·v3</code><br/>" +
-      "ML-Aggregator-Schnittstelle (ONNX) liegt bereit für späteren XGBoost-Drop-in.",
-  },
-  v5: {
-    title: "TIPS-26.5", tag: "Bivariate", desc: "v2-Stärken + Bivariate Poisson",
-    details:
-      "Exakte Bivariate Poisson (Karlis & Ntzoufras 2003) statt DC-Resampling:<br/>" +
-      "<code>X_A = X_1 + X_3</code>, <code>X_B = X_2 + X_3</code>, λ_3 = 0.2<br/>" +
-      "Marginal-Mittelwerte wie v2, positive Korrelation der Tore beider Teams. Mehr Diagonal-Remis (2:2, 3:3).",
-  },
-};
 
 const PRESET_ORDER: PresetKey[] = ["default", "balanced", "elo", "market", "form", "experience"];
 
 function AlgorithmSwitcher() {
   const algorithm = useStore((s) => s.algorithm);
   const setAlgorithm = useStore((s) => s.setAlgorithm);
+  const { t } = useT();
   const versions: AlgorithmVersion[] = ["v1", "v2", "v3", "v4", "v5"];
+
+  const info = (v: AlgorithmVersion) => {
+    if (v === "v1") return { title: t.algoInfo.v1Title, tag: t.algoInfo.v1Tag, desc: t.algoInfo.v1Desc, details: t.algoInfo.v1Details };
+    if (v === "v2") return { title: t.algoInfo.v2Title, tag: t.algoInfo.v2Tag, desc: t.algoInfo.v2Desc, details: t.algoInfo.v2Details };
+    if (v === "v3") return { title: t.algoInfo.v3Title, tag: t.algoInfo.v3Tag, desc: t.algoInfo.v3Desc, details: t.algoInfo.v3Details };
+    if (v === "v4") return { title: t.algoInfo.v4Title, tag: t.algoInfo.v4Tag, desc: t.algoInfo.v4Desc, details: t.algoInfo.v4Details };
+    return { title: t.algoInfo.v5Title, tag: t.algoInfo.v5Tag, desc: t.algoInfo.v5Desc, details: t.algoInfo.v5Details };
+  };
 
   return (
     <>
       <div className="algo-grid">
         {versions.map((v) => {
-          const info = ALGO_INFO[v];
+          const i = info(v);
           const active = algorithm === v;
           return (
             <button
@@ -73,15 +40,15 @@ function AlgorithmSwitcher() {
               onClick={() => setAlgorithm(v)}
             >
               <div className="algo-btn-row">
-                <span className="algo-btn-name">{info.title}</span>
-                <span className="algo-btn-tag">{info.tag}</span>
+                <span className="algo-btn-name">{i.title}</span>
+                <span className="algo-btn-tag">{i.tag}</span>
               </div>
-              <div className="algo-btn-desc">{info.desc}</div>
+              <div className="algo-btn-desc">{i.desc}</div>
             </button>
           );
         })}
       </div>
-      <div className="algo-info" dangerouslySetInnerHTML={{ __html: ALGO_INFO[algorithm].details }} />
+      <div className="algo-info" dangerouslySetInnerHTML={{ __html: info(algorithm).details }} />
     </>
   );
 }
@@ -89,11 +56,12 @@ function AlgorithmSwitcher() {
 function Presets() {
   const activePreset = useStore((s) => s.activePreset);
   const applyPreset = useStore((s) => s.applyPreset);
+  const { t } = useT();
   return (
     <div className="preset-row">
       {PRESET_ORDER.map((p) => (
         <Button key={p} active={activePreset === p} onClick={() => applyPreset(p)}>
-          {PRESET_LABELS[p]}
+          {t.presets[p]}
         </Button>
       ))}
     </div>
@@ -103,6 +71,7 @@ function Presets() {
 function FactorSliders() {
   const weights = useStore((s) => s.weights);
   const setWeight = useStore((s) => s.setWeight);
+  const { t } = useT();
   return (
     <div className="sliders-wrap">
       {FAKTOREN.map((f) => {
@@ -112,7 +81,7 @@ function FactorSliders() {
             <div className="slider-header">
               <div className="slider-label">
                 <span className="slider-icon">{f.icon}</span>
-                {f.label}
+                {t.factors[f.key]}
               </div>
               <div className="slider-value-pill">{weights[f.key]}%</div>
             </div>
@@ -135,22 +104,23 @@ function FactorSliders() {
 function SimDepthSlider() {
   const idx = useStore((s) => s.numSimulationsIdx);
   const setIdx = useStore((s) => s.setNumSimulationsIdx);
+  const { t } = useT();
   const N = selectNumSimulations({ numSimulationsIdx: idx });
   const display = formatSimCount(N);
   const pct = (idx / (SIM_LEVELS.length - 1)) * 100;
 
   let warning: { tone: "warning" | "info"; text: string } | null = null;
-  if (N >= 500_000) warning = { tone: "warning", text: `🐢 Bei ${display} dauert die Sim ca. ${Math.round(N / 22_000)}–${Math.round(N / 11_000)} s.` };
-  else if (N >= 100_000) warning = { tone: "warning", text: `⏱️ Hoch: ca. ${Math.round(N / 22_000)} s Wartezeit.` };
-  else if (N >= 20_000) warning = { tone: "info", text: `Erwartung: ca. ${Math.max(1, Math.round(N / 22_000))} s.` };
+  if (N >= 500_000) warning = { tone: "warning", text: t.setup.perfWarn500k(display, Math.round(N / 22_000)) };
+  else if (N >= 100_000) warning = { tone: "warning", text: t.setup.perfWarn100k(Math.round(N / 22_000)) };
+  else if (N >= 20_000) warning = { tone: "info", text: t.setup.perfInfo20k(Math.max(1, Math.round(N / 22_000))) };
 
   return (
     <Card>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>Anzahl Turniere</div>
+          <div style={{ fontSize: 13, fontWeight: 700 }}>{t.setup.simDepth.title}</div>
           <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
-            Mehr Sims = genauere Wahrscheinlichkeiten
+            {t.setup.simDepth.hint}
           </div>
         </div>
         <div className="slider-value-pill" style={{ fontSize: 14, padding: "6px 12px" }}>{display}</div>
@@ -165,7 +135,10 @@ function SimDepthSlider() {
         style={{ "--val": `${pct}%` } as CSSProperties}
       />
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)" }}>
-        <span>1 K</span><span>10 K</span><span>100 K</span><span>1 Mio</span>
+        <span>{t.setup.simDepth.labelLow}</span>
+        <span>{t.setup.simDepth.labelMid1}</span>
+        <span>{t.setup.simDepth.labelMid2}</span>
+        <span>{t.setup.simDepth.labelHigh}</span>
       </div>
       {warning && (
         <div
@@ -186,22 +159,23 @@ function SimDepthSlider() {
 function SurpriseSlider() {
   const value = useStore((s) => s.surprisePercent);
   const setValue = useStore((s) => s.setSurprisePercent);
+  const { t } = useT();
   const sigmaPercent = ((value / 100) * 0.3 * 100).toFixed(0);
-  let hint = "Deterministisch — keine Tagesform-Streuung.";
-  if (value > 0 && value <= 20) hint = "Dezent — kleine Schwankungen, ähnliche Top-Favoriten.";
-  else if (value <= 50) hint = "Spürbar — Außenseiter überraschen häufiger.";
-  else if (value <= 80) hint = "Hoch — Top-Favoriten scheitern öfter in der K.o.-Phase.";
-  else if (value > 80) hint = "Sehr hoch — fast jedes Turnier bringt einen unerwarteten Champion.";
+  let hint = t.setup.surprise.hint0;
+  if (value > 0 && value <= 20) hint = t.setup.surprise.hint1;
+  else if (value <= 50) hint = t.setup.surprise.hint2;
+  else if (value <= 80) hint = t.setup.surprise.hint3;
+  else if (value > 80) hint = t.setup.surprise.hint4;
 
   return (
     <Card>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 15 }}>🎲</span> Überraschungs-Faktor
+            <span style={{ fontSize: 15 }}>🎲</span> {t.setup.surprise.title}
           </div>
           <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
-            Tagesform-Streuung pro Team pro Match
+            {t.setup.surprise.hint}
           </div>
         </div>
         <div className="slider-value-pill" style={{ fontSize: 14, padding: "6px 12px" }}>{value}%</div>
@@ -217,12 +191,12 @@ function SurpriseSlider() {
         style={{ "--val": `${value}%` } as CSSProperties}
       />
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)" }}>
-        <span>0 % (aus)</span><span>50 %</span><span>100 % (chaotisch)</span>
+        <span>{t.setup.surprise.scaleLow}</span><span>{t.setup.surprise.scaleMid}</span><span>{t.setup.surprise.scaleHigh}</span>
       </div>
       <div style={{ marginTop: 12, fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)" }}>
         {hint}{" "}
         <span style={{ color: "var(--text-tertiary)" }}>
-          (Stärke-Faktor pro Match ±{sigmaPercent} %)
+          {t.setup.surprise.sigmaParen(sigmaPercent)}
         </span>
       </div>
     </Card>
@@ -232,23 +206,24 @@ function SurpriseSlider() {
 function OverdispersionSlider() {
   const value = useStore((s) => s.dispersionPercent);
   const setValue = useStore((s) => s.setDispersionPercent);
+  const { t } = useT();
   const phi = ((value / 100) * 1.5).toFixed(2);
-  let hint = "Reine Poisson — Tore eng um λ verteilt, kaum 5+ Tor-Spiele.";
-  if (value > 0 && value <= 20) hint = "Leicht überdispers — etwas mehr 3:1, 4:1.";
-  else if (value <= 40) hint = "Empirisch passend (φ≈0.5) — 4:1 / 5:1 kommen häufig vor.";
-  else if (value <= 60) hint = "Spürbar — 5:0, 6:1, 4:3 keine Seltenheit.";
-  else if (value <= 80) hint = "Hoch — gelegentlich 7:1 oder 6:0.";
-  else hint = "Extrem — Torfestivals + 0:0-Defensiv-Festungen häufig nebeneinander.";
+  let hint = t.setup.overdisp.hint0;
+  if (value > 0 && value <= 20) hint = t.setup.overdisp.hint1;
+  else if (value <= 40) hint = t.setup.overdisp.hint2;
+  else if (value <= 60) hint = t.setup.overdisp.hint3;
+  else if (value <= 80) hint = t.setup.overdisp.hint4;
+  else hint = t.setup.overdisp.hint5;
 
   return (
     <Card>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 15 }}>⚡</span> Tor-Streuung
+            <span style={{ fontSize: 15 }}>⚡</span> {t.setup.overdisp.title}
           </div>
           <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
-            Wie oft fallen ungewöhnlich viele Tore?
+            {t.setup.overdisp.hint}
           </div>
         </div>
         <div className="slider-value-pill" style={{ fontSize: 14, padding: "6px 12px" }}>{value}%</div>
@@ -264,12 +239,12 @@ function OverdispersionSlider() {
         style={{ "--val": `${value}%` } as CSSProperties}
       />
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)" }}>
-        <span>0 % (Poisson)</span><span>50 %</span><span>100 % (Burst)</span>
+        <span>{t.setup.overdisp.scaleLow}</span><span>{t.setup.overdisp.scaleMid}</span><span>{t.setup.overdisp.scaleHigh}</span>
       </div>
       <div style={{ marginTop: 12, fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)" }}>
         {hint}{" "}
         <span style={{ color: "var(--text-tertiary)" }}>
-          (Overdispersion φ = {phi})
+          {t.setup.overdisp.phiParen(phi)}
         </span>
       </div>
     </Card>
@@ -279,6 +254,7 @@ function OverdispersionSlider() {
 function DfbCheatToggle() {
   const active = useStore((s) => s.dfbAlwaysWins);
   const setActive = useStore((s) => s.setDfbAlwaysWins);
+  const { t } = useT();
   return (
     <button
       onClick={() => setActive(!active)}
@@ -299,7 +275,7 @@ function DfbCheatToggle() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 22 }}>🇩🇪</span>
           <span style={{ fontSize: 14, fontWeight: 800, color: active ? "#fca5a5" : "var(--text-primary)" }}>
-            Deutschland gewinnt immer
+            {t.setup.dfbCheat.title}
           </span>
         </div>
         <div
@@ -321,18 +297,31 @@ function DfbCheatToggle() {
       <div style={{ fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)" }}>
         {active ? (
           <>
-            <strong style={{ color: "#fca5a5" }}>🏆 AKTIV.</strong> Jedes DFB-Spiel endet 3:0 für Deutschland,
-            jede K.o.-Runde wird durchmarschiert. Mit Spanien, Frankreich & Co. wird im Halbfinale kurz
-            reingeschaut — zum Frühstück gibts dann den Pokal.
+            <strong style={{ color: "#fca5a5" }}>{t.setup.dfbCheat.onLead}</strong>{" "}
+            {t.setup.dfbCheat.onText}
           </>
         ) : (
           <>
-            <strong>Easter-Egg.</strong> Nur für den Bierkasten-Spaß. Schaltet jede Statistik aus und
-            macht Deutschland deterministisch zum Weltmeister. Wissenschaftlich wertlos, emotional wertvoll.
+            <strong>{t.setup.dfbCheat.offLead}</strong>{" "}
+            {t.setup.dfbCheat.offText}
           </>
         )}
       </div>
     </button>
+  );
+}
+
+function LanguageSwitcher() {
+  const locale = useStore((s) => s.locale);
+  const setLocale = useStore((s) => s.setLocale);
+  return (
+    <div style={{ display: "flex", gap: 8 }}>
+      {LOCALES.map((l) => (
+        <Button key={l} active={locale === l} onClick={() => setLocale(l)}>
+          {LOCALE_FLAG[l]} {LOCALE_LABEL[l]}
+        </Button>
+      ))}
+    </div>
   );
 }
 
@@ -341,39 +330,43 @@ export function SetupTab({ onSimulationDone }: { onSimulationDone: () => void })
   const loading = useStore((s) => s.loading.kind);
   const run = useRunSimulation(onSimulationDone);
   const N = selectNumSimulations({ numSimulationsIdx: idx });
+  const { t } = useT();
 
   return (
     <section>
       <InfoBanner icon="⚙">
-        <strong>9 Faktoren bestimmen die Vorhersage.</strong> Justiere die Slider, wähle einen Algorithmus, und starte die Simulation.
+        <strong>{t.setup.bannerStrong}</strong> {t.setup.banner.replace(t.setup.bannerStrong, "").trim()}
       </InfoBanner>
 
-      <SectionTitle>🧮 Algorithmus</SectionTitle>
+      <SectionTitle>{t.setup.algoTitle}</SectionTitle>
       <AlgorithmSwitcher />
 
-      <SectionTitle>🎯 Voreinstellungen</SectionTitle>
+      <SectionTitle>{t.setup.presetsTitle}</SectionTitle>
       <Presets />
 
-      <SectionTitle>🎚️ Gewichtungen</SectionTitle>
+      <SectionTitle>{t.setup.weightsTitle}</SectionTitle>
       <FactorSliders />
 
-      <SectionTitle>🎲 Simulations-Tiefe</SectionTitle>
+      <SectionTitle>{t.setup.simDepthTitle}</SectionTitle>
       <SimDepthSlider />
 
-      <SectionTitle>🎰 Überraschungs-Faktor</SectionTitle>
+      <SectionTitle>{t.setup.surpriseTitle}</SectionTitle>
       <SurpriseSlider />
 
-      <SectionTitle>⚡ Tor-Streuung</SectionTitle>
+      <SectionTitle>{t.setup.overdispTitle}</SectionTitle>
       <OverdispersionSlider />
 
-      <SectionTitle>🎉 Spaß-Modus</SectionTitle>
+      <SectionTitle>{t.setup.funModeTitle}</SectionTitle>
       <DfbCheatToggle />
+
+      <SectionTitle>{t.setup.languageTitle}</SectionTitle>
+      <LanguageSwitcher />
 
       <div className="sim-controls">
         <Button variant="primary" full disabled={loading !== null} onClick={run}>
-          {loading ? "⏳ Simuliere ..." : `🎲 Simulation starten · ${formatSimCount(N)}×`}
+          {loading ? t.setup.runButtonBusy : `${t.setup.runButton} · ${formatSimCount(N)}${t.setup.runButtonTimes}`}
         </Button>
-        <div className="sim-status">Bereit zum Simulieren</div>
+        <div className="sim-status">{t.setup.statusReady}</div>
       </div>
     </section>
   );

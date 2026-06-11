@@ -2,24 +2,26 @@ import type { Tab } from "@/App";
 import { useStore } from "@/store";
 import { TEAMS } from "@lib/data/teams";
 import type { GroupName } from "@lib/types/team";
+import { useT } from "@/i18n";
 import { AlgorithmBadge, EmptyResult, InfoBanner } from "./ui";
 
-export function GroupsTab({ nav }: { nav: (t: Tab) => void }) {
+export function GroupsTab({ nav }: { nav: (tab: Tab) => void }) {
   const result = useStore((s) => s.simulationResult);
+  const { t, teamName } = useT();
   if (!result) return <EmptyResult nav={nav} />;
   const N = result.numSimulations;
 
   const groups: Record<GroupName, number[]> = {} as Record<GroupName, number[]>;
-  TEAMS.forEach((t, i) => {
-    if (!groups[t.group]) groups[t.group] = [];
-    groups[t.group].push(i);
+  TEAMS.forEach((team, i) => {
+    if (!groups[team.group]) groups[team.group] = [];
+    groups[team.group].push(i);
   });
 
   return (
     <section>
       <AlgorithmBadge algorithm={result.algorithm} />
       <InfoBanner icon="📊">
-        <strong>Gruppensieger-Vorhersage.</strong> Pro Team siehst Du die Wahrscheinlichkeit für jede Position. Mintfarbene Zahl = P(Platz 1).
+        <strong>{t.groups.bannerStrong}</strong> {t.groups.bannerText}
       </InfoBanner>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -45,12 +47,12 @@ export function GroupsTab({ nav }: { nav: (t: Tab) => void }) {
               <div className="group-header">
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div className="group-letter">{g}</div>
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>Gruppe {g}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{t.groups.groupLabel(g)}</div>
                 </div>
                 <div style={{ textAlign: "right", fontSize: 10, color: "var(--text-tertiary)" }}>
-                  🏅 Favorit
+                  {t.groups.favorite}
                   <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
-                    {fav.team.flag} {fav.team.name}
+                    {fav.team.flag} {teamName(fav.team.name)}
                   </div>
                 </div>
               </div>
@@ -62,7 +64,7 @@ export function GroupsTab({ nav }: { nav: (t: Tab) => void }) {
                     <div key={r.idx} className={`group-team-row ${isDFB ? "is-germany" : ""}`}>
                       <div className="group-team-flag">{r.team.flag}</div>
                       <div className="group-team-info">
-                        <div className="group-team-name">{r.team.name}</div>
+                        <div className="group-team-name">{teamName(r.team.name)}</div>
                         <div className="group-bars">
                           <div className="b1" style={{ width: `${r.p1}%` }} />
                           <div className="b2" style={{ width: `${r.p2}%` }} />
@@ -72,7 +74,7 @@ export function GroupsTab({ nav }: { nav: (t: Tab) => void }) {
                       </div>
                       <div className="group-pcts">
                         <div className="p1">{r.p1.toFixed(0)}%</div>
-                        <div className="quali">Quali {quali.toFixed(0)}%</div>
+                        <div className="quali">{t.groups.qualify} {quali.toFixed(0)}%</div>
                       </div>
                     </div>
                   );
