@@ -238,10 +238,17 @@ export function HomeOverview() {
         Gruppen, Spiele oder Ranking an.
       </InfoBanner>
 
-      <div className="mt-4 text-center">
+      <div className="mt-4 text-center flex flex-col gap-2">
+        <Link
+          href="/bracket"
+          className="inline-flex items-center justify-center gap-2 text-[12px] font-bold underline"
+          style={{ color: "var(--mint)" }}
+        >
+          🏆 K.o.-Bracket (Live-Status) →
+        </Link>
         <Link
           href="/backtest"
-          className="inline-flex items-center gap-2 text-[12px] font-bold underline"
+          className="inline-flex items-center justify-center gap-2 text-[12px] font-bold underline"
           style={{ color: "var(--mint)" }}
         >
           🔬 Backtest gegen WMs 2014 / 2018 / 2022 →

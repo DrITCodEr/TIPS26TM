@@ -120,7 +120,13 @@ export function HomeTab({ nav }: { nav: (t: Tab) => void }) {
         </span>, starte die Simulation, und schau Dir Gruppen, Spiele oder Ranking an.
       </InfoBanner>
 
-      <div style={{ marginTop: 16, textAlign: "center" }}>
+      <div style={{ marginTop: 16, textAlign: "center", display: "flex", flexDirection: "column", gap: 8 }}>
+        <span
+          style={{ fontSize: 12, fontWeight: 700, color: "var(--mint)", textDecoration: "underline", cursor: "pointer" }}
+          onClick={() => nav("bracket")}
+        >
+          🏆 K.o.-Bracket (Live-Status) →
+        </span>
         <span
           style={{ fontSize: 12, fontWeight: 700, color: "var(--mint)", textDecoration: "underline", cursor: "pointer" }}
           onClick={() => nav("backtest")}

@@ -10,6 +10,7 @@ import { SensitivityTab } from "@/components/SensitivityTab";
 import { GermanyTab } from "@/components/GermanyTab";
 import { HomeTab } from "@/components/HomeTab";
 import { BacktestTab } from "@/components/BacktestTab";
+import { BracketTab } from "@/components/BracketTab";
 
 export type Tab =
   | "home"
@@ -20,7 +21,8 @@ export type Tab =
   | "sensitivity"
   | "edge"
   | "germany"
-  | "backtest";
+  | "backtest"
+  | "bracket";
 
 const NAV: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "home", label: "Home", icon: (
@@ -180,8 +182,12 @@ export function App() {
         {tab === "edge" && <EdgeTab nav={nav} />}
         {tab === "germany" && <GermanyTab />}
         {tab === "backtest" && <BacktestTab onBack={() => setTab("home")} />}
+        {tab === "bracket" && <BracketTab onBack={(t) => setTab(t)} />}
       </div>
-      <BottomNav tab={tab === "backtest" ? "home" : tab} setTab={setTab} />
+      <BottomNav
+        tab={tab === "backtest" || tab === "bracket" ? "home" : tab}
+        setTab={setTab}
+      />
       <LoadingOverlay />
     </div>
   );
