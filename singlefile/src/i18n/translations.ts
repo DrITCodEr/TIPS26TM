@@ -179,6 +179,14 @@ const de = {
     perfWarn100k: (est: number) => `⏱️ Hoch: ca. ${est} s Wartezeit.`,
     perfInfo20k: (est: number) => `Erwartung: ca. ${est} s.`,
     statusReady: "Bereit zum Simulieren",
+    factorsHelp:
+      "Stell mit jedem Slider ein, wie wichtig der Faktor für die Vorhersage sein soll. Faktoren mit hohem Wert beeinflussen die Stärke einer Mannschaft stärker, Faktoren auf 0 werden ignoriert. Du musst nicht auf Summe 100 % achten — die Gewichte werden am Ende automatisch normiert.",
+    simDepthHelp:
+      "Wie oft das Turnier zufällig durchgespielt wird. Bei 1.000 Sims sind die Wahrscheinlichkeiten grob, bei 100.000 sehr genau, bei 1 Mio fast exakt. Jedes Spiel wird einzeln gewürfelt — bei 100.000 Sims also 7,2 Mio Match-Simulationen. Mehr Sims = präziser, aber langsamer.",
+    surpriseHelp:
+      "Tagesform-Schwankungen. Bei 0 % spielt jede Mannschaft immer auf ihrem theoretischen Niveau. Bei 100 % schwankt die Stärke pro Spiel zufällig um bis zu ±30 % — Außenseiter überraschen häufiger, Top-Favoriten scheitern öfter. Realistisch sind 40–60 %: Tagesform existiert, ist aber begrenzt.",
+    overdispHelp:
+      "Wie stark die Tor-Anzahl vom Erwartungswert abweicht. Bei 0 % (reine Poisson) liegen die Tore eng am Mittel — 5+ Tor-Spiele sind selten. Bei 100 % gibt es häufig Torfestivals (6:1, 7:0) und auch wieder 0:0-Spiele. Echte WM-Daten passen am besten zu ca. 50 %.",
   },
   presets: {
     default: "⭐ Empfehlung",
@@ -198,6 +206,24 @@ const de = {
     trainer: "Trainer-Stärke",
     star: "Top-Star-Wert",
     hoehe: "Klima-Anpassung",
+    eloHelp:
+      "ELO ist ein Punktesystem aus dem Schach, das auf Fußball übertragen wurde. Es steigt nach Siegen gegen starke Gegner, fällt nach Niederlagen. Eines der zuverlässigsten Stärke-Maße — reflektiert Ergebnisse statt Meinungen.",
+    fifaHelp:
+      "Die offizielle Weltrangliste der FIFA. Nutzt eine etwas andere Formel als ELO und reagiert träger. Korrelliert eng mit ELO, deshalb beide gewichtet zu nutzen birgt Doppelzählungs-Gefahr.",
+    marktHelp:
+      "Summe der geschätzten Marktwerte aller 23 Kaderspieler (Transfermarkt). Reflektiert, wie viel der Markt auf das Team setzt — Talent plus aktuelle Form, gefiltert durch Klub-Trainer-Bewertungen.",
+    formHelp:
+      "Punkteausbeute der letzten 10–15 Länderspiele. Misst, ob das Team gerade in Form ist (heiße Phase) oder in einer Krise. Entscheidend für kurzfristige Vorhersagen, weniger für die langfristige Stärke.",
+    heimHelp:
+      "Wie nah sind die Spielorte am Heimland und wie viele Fans werden dabei sein? USA, Mexiko und Kanada profitieren am meisten. Andere Mannschaften können Reise-Strapazen und fremdes Klima haben.",
+    wmHFHelp:
+      "Anzahl bisheriger WM-Halbfinal-Teilnahmen. Misst, ob die Mannschaft Druck-Erfahrung hat. Studien zeigen: Erfahrene Teams scheitern seltener in K.o.-Runden gegen Newcomer.",
+    trainerHelp:
+      "Erfahrung und Trophäen-Bilanz des Coaches (Vereins- und Nationaltrainer). Trainer prägen Taktik, Mentalität und Kader-Auswahl — besonders bei knappen Spielen.",
+    starHelp:
+      "Marktwert des wertvollsten Spielers im Kader. Die Idee: in K.o.-Runden entscheiden oft individuelle Glanzleistungen (Messi, Mbappé). Ein Top-Star kann ein durchschnittliches Team weit tragen.",
+    hoeheHelp:
+      "Anpassung an Hitze, Höhe und Klima an den 16 Spielorten — von kühlem Vancouver bis 38 °C in Houston, Mexiko-Stadt auf 2.240 m. Teams aus ähnlichen Klimazonen sind im Vorteil.",
   },
   algoInfo: {
     v1Title: "TIPS-26.1",
@@ -227,6 +253,17 @@ const de = {
       "Exakte Bivariate Poisson (Karlis & Ntzoufras 2003) statt DC-Resampling:<br/><code>X_A = X_1 + X_3</code>, <code>X_B = X_2 + X_3</code>, λ_3 = 0.2<br/>Marginal-Mittelwerte wie v2, positive Korrelation der Tore beider Teams. Mehr Diagonal-Remis (2:2, 3:3).",
     badgeCalculated: "Berechnet mit",
     cheatBadge: "🇩🇪 CHEAT-MODE aktiv",
+    infoLabel: "Wie funktioniert das?",
+    simpleV1:
+      "Die einfachste Variante. Jeder der 9 Faktoren (ELO, Marktwert, Form …) bekommt ein Gewicht, alles wird zusammenaddiert — das ergibt die Stärke einer Mannschaft. Aus der Differenz zweier Stärken werden die Tore zufällig gezogen (Poisson-Verteilung). Schnell und transparent. Schwäche: ELO und FIFA messen ähnliches, das doppelte Gewichten verzerrt etwas.",
+    simpleV2:
+      "Wissenschaftlich solider. Die Tor-Formel ist exponentiell statt linear — passt besser, wenn ein Team klar stärker ist. Eine zusätzliche Korrektur (Dixon-Coles) macht 1:1-Spiele realistisch häufig. Und 30 % der Prognose kommen aus echten Buchmacher-Quoten — der Markt weiß Dinge (Verletzungen, Insider-Wissen), die das Modell nicht weiß.",
+    simpleV3:
+      "v2 plus Spielerdaten. Wir berücksichtigen den Kader-Marktwert, wie viele Spieler in den Top-Ligen aktiv sind, erwartete Tore (xG) und Torwart-Qualität. Diese Spielerdaten machen 30 % der Stärke aus, der Rest kommt von v2. Idee: Talent erzeugt Erfolg — eine Mannschaft mit teurer Top-11 hat im Schnitt bessere Chancen.",
+    simpleV4:
+      "Drei Modelle gemittelt: 15 % v1 + 45 % v2 + 40 % v3. Schwächen einzelner Modelle heben sich gegenseitig auf. Das ist ein bewährtes Verfahren aus ML-Wettbewerben (\"Stacking\"). In der Praxis liefert es etwas stabilere Rankings als jedes Einzelmodell.",
+    simpleV5:
+      "Wie v2, aber die Tore beider Teams werden gemeinsam gezogen statt unabhängig. Realistischer: in einem offenen Spiel fallen oft auf beiden Seiten Tore (2:2, 3:3), in einem defensiven Spiel auf beiden Seiten wenige. Mathematisch heißt das \"Bivariate Poisson\".",
   },
   groups: {
     bannerStrong: "Gruppensieger-Vorhersage.",
@@ -632,6 +669,14 @@ const en: typeof de = {
     perfWarn100k: (est: number) => `⏱️ High: about ${est}s waiting time.`,
     perfInfo20k: (est: number) => `Expected: about ${est}s.`,
     statusReady: "Ready to simulate",
+    factorsHelp:
+      "Each slider sets how important a factor is for the forecast. Factors with higher weight influence a team's strength more; factors set to 0 are ignored. You don't need to make them sum to 100% — weights are normalized automatically at the end.",
+    simDepthHelp:
+      "How many times the tournament is randomly played through. With 1,000 sims the probabilities are rough; with 100,000 very accurate; with 1M almost exact. Each match is sampled individually — at 100,000 sims that's 7.2M match simulations. More sims = sharper, but slower.",
+    surpriseHelp:
+      "Daily form variance. At 0% every team always plays at its theoretical level. At 100% strength varies per match by up to ±30% — underdogs surprise more often, top favorites fail more often. Realistic values are 40–60%: daily form exists but is limited.",
+    overdispHelp:
+      "How much goal counts deviate from the expected value. At 0% (pure Poisson) goals cluster tightly around the mean — 5+ goal matches are rare. At 100% you see frequent goal festivals (6:1, 7:0) and also more 0:0 matches. Real WC data fits best around 50%.",
   },
   presets: {
     default: "⭐ Recommended",
@@ -651,6 +696,24 @@ const en: typeof de = {
     trainer: "Coach Quality",
     star: "Top Star Value",
     hoehe: "Climate Adjustment",
+    eloHelp:
+      "ELO is a points system borrowed from chess and applied to football. It rises after wins against strong opponents and falls after losses. One of the most reliable strength measures — reflects results, not opinions.",
+    fifaHelp:
+      "The official FIFA world ranking. Uses a slightly different formula than ELO and reacts more slowly. Correlates closely with ELO, so weighting both risks double-counting.",
+    marktHelp:
+      "Sum of estimated market values of all 23 squad players (Transfermarkt). Reflects how much the market backs the team — talent plus current form, filtered through club-coach evaluations.",
+    formHelp:
+      "Points from the last 10–15 international matches. Measures whether the team is in form (hot streak) or in a crisis. Crucial for short-term predictions, less so for long-term strength.",
+    heimHelp:
+      "How close are the venues to the home country and how many fans will travel? USA, Mexico and Canada benefit most. Other teams may face travel fatigue and unfamiliar climates.",
+    wmHFHelp:
+      "Number of previous WC semifinal appearances. Measures whether the team has pressure experience. Studies show: experienced teams fail less often in knockout rounds against newcomers.",
+    trainerHelp:
+      "Experience and trophy record of the coach (club and national team). Coaches shape tactics, mentality and squad selection — especially in tight matches.",
+    starHelp:
+      "Market value of the most valuable player in the squad. The idea: knockout rounds are often decided by individual brilliance (Messi, Mbappé). A top star can carry an average team far.",
+    hoeheHelp:
+      "Adjustment for heat, altitude and climate at the 16 venues — from cool Vancouver to 38°C in Houston, Mexico City at 2,240 m. Teams from similar climate zones have an edge.",
   },
   algoInfo: {
     v1Title: "TIPS-26.1",
@@ -680,6 +743,17 @@ const en: typeof de = {
       "Exact bivariate Poisson (Karlis & Ntzoufras 2003) instead of DC resampling:<br/><code>X_A = X_1 + X_3</code>, <code>X_B = X_2 + X_3</code>, λ_3 = 0.2<br/>Marginal means equal to v2, positive correlation between goal counts. More diagonal draws (2:2, 3:3).",
     badgeCalculated: "Computed with",
     cheatBadge: "🇩🇪 CHEAT MODE active",
+    infoLabel: "How does this work?",
+    simpleV1:
+      "The simplest variant. Each of the 9 factors (ELO, market value, form …) gets a weight, all summed up — that's the team's strength. From the strength gap between two teams, goals are drawn at random (Poisson distribution). Fast and transparent. Weakness: ELO and FIFA measure similar things; weighting both can double-count.",
+    simpleV2:
+      "Scientifically more solid. The goal formula is exponential instead of linear — fits better when one team is clearly stronger. An extra correction (Dixon-Coles) makes 1:1 draws realistically frequent. And 30% of the forecast comes from real bookmaker odds — the market knows things (injuries, insider info) the model doesn't.",
+    simpleV3:
+      "v2 plus player data. We factor in squad market value, how many players are active in top leagues, expected goals (xG) and goalkeeper quality. Player data makes up 30% of the strength, the rest comes from v2. Idea: talent drives success — a team with an expensive top-11 has better odds on average.",
+    simpleV4:
+      "Three models averaged: 15% v1 + 45% v2 + 40% v3. Weaknesses of individual models cancel each other out. This is a proven technique from ML competitions (\"stacking\"). In practice it yields slightly more stable rankings than any single model.",
+    simpleV5:
+      "Like v2, but goals for both teams are sampled jointly instead of independently. More realistic: in an open match goals often fall on both sides (2:2, 3:3); in a defensive match few on both sides. Mathematically this is \"bivariate Poisson\".",
   },
   groups: {
     bannerStrong: "Group winner prediction.",

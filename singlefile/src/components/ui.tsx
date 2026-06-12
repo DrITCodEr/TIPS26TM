@@ -1,10 +1,97 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { useStore } from "@/store";
 import type { AlgorithmVersion } from "@lib/types/simulation";
 import { useT } from "@/i18n";
 
 export function SectionTitle({ children }: { children: ReactNode }) {
   return <div className="section-title">{children}</div>;
+}
+
+/**
+ * Custom Hook für ein (i)-Toggle: liefert `button` (inline platzierbar,
+ * z. B. in einem horizontalen Header-Flex) und `panel` (block, separat
+ * darunter zu rendern). State lebt im Hook, damit der Aufrufer nichts
+ * verwalten muss.
+ *
+ * Warum getrennt? Wenn Button und Panel in derselben Flex-Row stehen,
+ * sprengt das Panel das Layout. Aufrufer entscheidet selbst, wo das
+ * Panel hin soll.
+ */
+export function useInfoToggle({
+  children,
+  size = 22,
+}: {
+  children: ReactNode;
+  size?: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const button = (
+    <button
+      type="button"
+      onClick={() => setOpen(!open)}
+      aria-label="Erklärung anzeigen"
+      title={open ? "Schließen" : "Erklärung anzeigen"}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        border: open ? "1px solid var(--mint)" : "1px solid var(--border-subtle)",
+        background: open ? "var(--mint)" : "var(--bg-tertiary)",
+        color: open ? "var(--bg-deep)" : "var(--text-tertiary)",
+        fontSize: 11,
+        fontWeight: 800,
+        fontStyle: "italic",
+        fontFamily: "Georgia, serif",
+        cursor: "pointer",
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 0,
+        lineHeight: 1,
+        transition: "all 0.15s ease",
+      }}
+    >
+      i
+    </button>
+  );
+  const panel = open ? (
+    <div
+      style={{
+        marginTop: 10,
+        padding: "10px 12px",
+        borderRadius: 10,
+        background: "rgba(94, 234, 212, 0.06)",
+        border: "1px solid rgba(94, 234, 212, 0.18)",
+        fontSize: 11,
+        lineHeight: 1.6,
+        color: "var(--text-secondary)",
+      }}
+    >
+      {children}
+    </div>
+  ) : null;
+  return { button, panel, open };
+}
+
+/**
+ * Bequemes Wrapper-Component für simple, vertikale Layouts:
+ * rendert Button und Panel direkt untereinander.
+ */
+export function InfoToggle({
+  children,
+  size,
+}: {
+  children: ReactNode;
+  size?: number;
+}) {
+  const { button, panel } = useInfoToggle({ children, size });
+  return (
+    <>
+      {button}
+      {panel}
+    </>
+  );
 }
 
 export function Card({
