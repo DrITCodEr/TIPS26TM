@@ -14,6 +14,7 @@ import { GermanyTab } from "@/components/GermanyTab";
 import { HomeTab } from "@/components/HomeTab";
 import { BacktestTab } from "@/components/BacktestTab";
 import { BracketTab } from "@/components/BracketTab";
+import { TreeTab } from "@/components/TreeTab";
 
 export type Tab =
   | "home"
@@ -24,6 +25,7 @@ export type Tab =
   | "sensitivity"
   | "edge"
   | "germany"
+  | "tree"
   | "backtest"
   | "bracket";
 
@@ -53,6 +55,9 @@ const NAV: NavItem[] = [
   )},
   { id: "germany", labelKey: "germany", icon: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3a14 14 0 0 1 0 18" /><path d="M12 3a14 14 0 0 0 0 18" /></svg>
+  )},
+  { id: "tree", labelKey: "tree", icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h6v6H4z" /><path d="M14 4h6v6h-6z" /><path d="M4 14h6v6H4z" /><path d="M14 14h6v6h-6z" /><path d="M7 10v2H4M17 10v2h3M10 17H7v-3M14 17h3v-3" /></svg>
   )},
 ];
 
@@ -222,6 +227,7 @@ export function App() {
         {tab === "sensitivity" && <SensitivityTab />}
         {tab === "edge" && <EdgeTab nav={nav} />}
         {tab === "germany" && <GermanyTab />}
+        {tab === "tree" && <TreeTab />}
         {tab === "backtest" && <BacktestTab onBack={() => setTab("home")} />}
         {tab === "bracket" && <BracketTab onBack={(t) => setTab(t)} />}
       </div>
