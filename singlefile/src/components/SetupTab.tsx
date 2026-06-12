@@ -251,6 +251,101 @@ function OverdispersionSlider() {
   );
 }
 
+function LiveResultsCard() {
+  const useLive = useStore((s) => s.useLiveResults);
+  const setUseLive = useStore((s) => s.setUseLiveResults);
+  const alpha = useStore((s) => s.liveStrengthPercent);
+  const setAlpha = useStore((s) => s.setLiveStrengthPercent);
+  const liveResults = useStore((s) => s.liveResults);
+  const { t } = useT();
+
+  const finishedCount = Object.values(liveResults).filter((r) => r.completed).length;
+
+  let hint = t.setup.live.strengthHint0;
+  if (alpha > 0 && alpha <= 20) hint = t.setup.live.strengthHint1;
+  else if (alpha <= 50) hint = t.setup.live.strengthHint2;
+  else if (alpha <= 80) hint = t.setup.live.strengthHint3;
+  else if (alpha > 80) hint = t.setup.live.strengthHint4;
+
+  return (
+    <Card>
+      <button
+        onClick={() => setUseLive(!useLive)}
+        style={{
+          width: "100%", padding: 0, textAlign: "left", background: "transparent",
+          border: "none", cursor: "pointer", color: "inherit",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 15 }}>📡</span> {t.setup.live.toggleTitle}
+          </div>
+          <div
+            style={{
+              width: 48, height: 28, borderRadius: 14, position: "relative", flexShrink: 0,
+              background: useLive ? "var(--mint)" : "var(--bg-tertiary)",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute", top: 4, width: 20, height: 20, borderRadius: 10,
+                background: "#fff", boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                left: useLive ? 24 : 4, transition: "left 0.15s ease",
+              }}
+            />
+          </div>
+        </div>
+        <div style={{ fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+          {useLive ? t.setup.live.toggleOn : t.setup.live.toggleOff}
+        </div>
+      </button>
+
+      <div style={{ fontSize: 11, marginTop: 10, padding: "6px 10px", borderRadius: 8, background: "var(--bg-tertiary)", color: "var(--text-tertiary)", fontWeight: 600 }}>
+        {finishedCount > 0 ? t.setup.live.counter(finishedCount) : t.setup.live.none}
+      </div>
+
+      <div
+        style={{
+          marginTop: 14,
+          paddingTop: 14,
+          borderTop: "1px solid var(--border-subtle)",
+          opacity: useLive ? 1 : 0.4,
+          pointerEvents: useLive ? "auto" : "none",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 15 }}>🧠</span> {t.setup.live.strengthTitle}
+            </div>
+            <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
+              {t.setup.live.strengthHint}
+            </div>
+          </div>
+          <div className="slider-value-pill" style={{ fontSize: 14, padding: "6px 12px" }}>{alpha}%</div>
+        </div>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={alpha}
+          onChange={(e) => setAlpha(Number(e.target.value))}
+          className="tips-range"
+          style={{ "--val": `${alpha}%` } as CSSProperties}
+        />
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, fontWeight: 600, color: "var(--text-tertiary)" }}>
+          <span>{t.setup.live.scaleLow}</span><span>{t.setup.live.scaleMid}</span><span>{t.setup.live.scaleHigh}</span>
+        </div>
+        <div style={{ marginTop: 12, fontSize: 11, lineHeight: 1.5, color: "var(--text-secondary)" }}>
+          {hint}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function DfbCheatToggle() {
   const active = useStore((s) => s.dfbAlwaysWins);
   const setActive = useStore((s) => s.setDfbAlwaysWins);
@@ -355,6 +450,9 @@ export function SetupTab({ onSimulationDone }: { onSimulationDone: () => void })
 
       <SectionTitle>{t.setup.overdispTitle}</SectionTitle>
       <OverdispersionSlider />
+
+      <SectionTitle>{t.setup.liveTitle}</SectionTitle>
+      <LiveResultsCard />
 
       <SectionTitle>{t.setup.funModeTitle}</SectionTitle>
       <DfbCheatToggle />

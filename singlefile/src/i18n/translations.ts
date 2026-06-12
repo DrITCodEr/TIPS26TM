@@ -99,6 +99,7 @@ const de = {
     surpriseTitle: "🎰 Überraschungs-Faktor",
     overdispTitle: "⚡ Tor-Streuung",
     funModeTitle: "🎉 Spaß-Modus",
+    liveTitle: "🔴 Live-Ergebnisse",
     languageTitle: "🌐 Sprache",
     runButton: "🎲 Simulation starten",
     runButtonBusy: "⏳ Simuliere ...",
@@ -138,6 +139,31 @@ const de = {
       hint3: "Spürbar — 5:0, 6:1, 4:3 keine Seltenheit.",
       hint4: "Hoch — gelegentlich 7:1 oder 6:0.",
       hint5: "Extrem — Torfestivals + 0:0-Defensiv-Festungen häufig nebeneinander.",
+    },
+    live: {
+      toggleTitle: "Reale Ergebnisse berücksichtigen",
+      toggleOn:
+        "AN — abgepfiffene Spiele werden in der Sim als fix übernommen, statt sie zu samplen. Beeinflusst Gruppentabellen, Bracket und Titelchancen sofort.",
+      toggleOff:
+        "AUS — Sim spielt jedes Match neu durch, ignoriert reale Ergebnisse. Liefert reine Pre-Turnier-Wahrscheinlichkeiten.",
+      strengthTitle: "Form-Update aus Live-Daten",
+      strengthHint:
+        "Wie stark sollen tatsächliche Performance die Stärke einer Mannschaft korrigieren?",
+      scaleLow: "0 % (kein Update)",
+      scaleMid: "50 %",
+      scaleHigh: "100 % (sehr stark)",
+      strengthHint0: "Aus — nur Konditionierung, keine Stärken-Anpassung.",
+      strengthHint1:
+        "Sanft — leichte ELO-artige Korrektur, robust gegen Ausreißer.",
+      strengthHint2:
+        "Spürbar — Überraschungs-Siege verschieben die Titelchancen merklich.",
+      strengthHint3:
+        "Stark — eine Mannschaft die hoch gewinnt klettert deutlich im Ranking.",
+      strengthHint4:
+        "Aggressiv — kleines Sample (3 Gruppenspiele) führt zu Überreaktionen.",
+      counter: (n: number) =>
+        `${n} / 72 Gruppenspiele werden aktuell berücksichtigt.`,
+      none: "Noch keine abgepfiffenen Spiele in den Live-Daten.",
     },
     dfbCheat: {
       title: "Deutschland gewinnt immer",
@@ -526,6 +552,7 @@ const en: typeof de = {
     surpriseTitle: "🎰 Surprise Factor",
     overdispTitle: "⚡ Goal Variance",
     funModeTitle: "🎉 Fun Mode",
+    liveTitle: "🔴 Live results",
     languageTitle: "🌐 Language",
     runButton: "🎲 Run Simulation",
     runButtonBusy: "⏳ Simulating ...",
@@ -565,6 +592,31 @@ const en: typeof de = {
       hint3: "Noticeable — 5:0, 6:1, 4:3 not uncommon.",
       hint4: "High — occasional 7:1 or 6:0.",
       hint5: "Extreme — goal festivals + 0:0 defensive fortresses next to each other.",
+    },
+    live: {
+      toggleTitle: "Use real results",
+      toggleOn:
+        "ON — finished matches are treated as fixed in the sim instead of being resampled. Affects group tables, bracket and title chances immediately.",
+      toggleOff:
+        "OFF — sim replays every match from scratch, ignoring real results. Yields pure pre-tournament probabilities.",
+      strengthTitle: "Form update from live data",
+      strengthHint:
+        "How strongly should actual performance correct a team's strength?",
+      scaleLow: "0 % (no update)",
+      scaleMid: "50 %",
+      scaleHigh: "100 % (very strong)",
+      strengthHint0: "Off — conditioning only, no strength adjustment.",
+      strengthHint1:
+        "Gentle — light ELO-style correction, robust against outliers.",
+      strengthHint2:
+        "Noticeable — upset wins visibly shift title probabilities.",
+      strengthHint3:
+        "Strong — a team that wins big climbs the ranking clearly.",
+      strengthHint4:
+        "Aggressive — small sample (3 group matches) leads to overreactions.",
+      counter: (n: number) =>
+        `${n} / 72 group matches currently incorporated.`,
+      none: "No finished matches in the live data yet.",
     },
     dfbCheat: {
       title: "Germany always wins",

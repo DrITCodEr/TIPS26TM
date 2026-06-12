@@ -10,11 +10,13 @@ import type {
   SimulationResult,
   TeamStats,
 } from "@/lib/types/simulation";
+import type { LiveMatchResult } from "@/lib/data/liveResults";
 import { calculateStrengths, simulateMatch, type MatchResult } from "./index";
 import { simulateKnockout } from "./knockout";
 import { defaultRng, type Rng } from "./random";
 import { resolveR32, type QualifiedThird } from "./fifaBracket";
 import { R16_ROUND, QF_ROUND, SF_ROUND } from "@/lib/data/koBracket";
+import { updateStrengthsFromLive } from "./liveUpdate";
 
 interface GroupRecord {
   idx: number;
@@ -142,6 +144,14 @@ export function simulateOneTournament(args: {
   dispersion?: number;
   /** Easter-Egg: DFB-Spiele werden deterministisch 3:0 für Deutschland. */
   dfbAlwaysWins?: boolean;
+  /**
+   * Stufe-1-Konditionierung: bei `useLiveResults=true` wird für jedes
+   * abgepfiffene Match aus `liveResults` das tatsächliche Ergebnis
+   * verwendet, statt es zu samplen. `matchStats` werden dann für dieses
+   * Match deterministisch (100 % auf den realen Score).
+   */
+  liveResults?: Record<number, LiveMatchResult>;
+  useLiveResults?: boolean;
 }): TournamentOutcome {
   const {
     algorithm,
@@ -155,6 +165,8 @@ export function simulateOneTournament(args: {
     surpriseSigma = 0,
     dispersion = 0,
     dfbAlwaysWins = false,
+    liveResults,
+    useLiveResults = false,
   } = args;
 
   // === Gruppenphase ===
@@ -173,9 +185,13 @@ export function simulateOneTournament(args: {
     const a = m.idxA!;
     const b = m.idxB!;
     let result: MatchResult;
+    const lr = useLiveResults ? liveResults?.[mi] : undefined;
     const aIsDfb = dfbAlwaysWins && teams[a].name === "Deutschland";
     const bIsDfb = dfbAlwaysWins && teams[b].name === "Deutschland";
-    if (aIsDfb) {
+    if (lr?.isFinished) {
+      // Stufe-1-Konditionierung: realer Score überschreibt Sim & Cheat-Mode
+      result = { toreA: lr.goalsA, toreB: lr.goalsB };
+    } else if (aIsDfb) {
       result = { toreA: 3, toreB: 0 };
     } else if (bIsDfb) {
       result = { toreA: 0, toreB: 3 };
@@ -299,6 +315,16 @@ export interface MonteCarloConfig {
   dispersion?: number;
   /** Easter-Egg: DFB-Spiele werden deterministisch 3:0 für Deutschland. */
   dfbAlwaysWins?: boolean;
+  /**
+   * Stufe 1 + 2 (Live-Ergebnisse): beendete Spiele aus `liveResults`
+   * werden bei jeder Iteration als fix übernommen, und die Pre-Turnier-
+   * Stärken werden mit `liveStrengthAlpha ∈ [0, 1]` per ELO-Update auf
+   * die beobachteten Spielausgänge angepasst.
+   */
+  liveResults?: Record<number, LiveMatchResult>;
+  useLiveResults?: boolean;
+  /** 0 = kein Stärken-Update, 1 = maximales Update. */
+  liveStrengthAlpha?: number;
   rng?: Rng;
   /** Wird ~100x pro Run aufgerufen mit progress ∈ [0, 1]. */
   onProgress?: (progress: number) => void;
@@ -323,17 +349,32 @@ export async function runMonteCarlo(
     surpriseSigma = 0,
     dispersion = 0,
     dfbAlwaysWins = false,
+    liveResults,
+    useLiveResults = false,
+    liveStrengthAlpha = 0,
     rng = defaultRng,
     onProgress,
   } = config;
 
-  const staerken = calculateStrengths(
+  const baseStaerken = calculateStrengths(
     algorithm,
     teams,
     weights,
     marktQuoten,
     playerAggregates,
   );
+  // Stufe 2: Bayes-Update auf Basis tatsächlicher Spielausgänge.
+  // Wenn keine Live-Daten vorliegen oder α=0, ist der Output identisch
+  // mit `baseStaerken`.
+  const staerken =
+    useLiveResults && liveResults && liveStrengthAlpha > 0
+      ? updateStrengthsFromLive(
+          baseStaerken,
+          liveResults,
+          schedule,
+          liveStrengthAlpha,
+        )
+      : baseStaerken;
 
   const teamStats: TeamStats[] = teams.map(() => createTeamStats());
   const matchStats: MatchStats[] = schedule.map(() => createMatchStats());
@@ -361,6 +402,8 @@ export async function runMonteCarlo(
         surpriseSigma,
         dispersion,
         dfbAlwaysWins,
+        liveResults,
+        useLiveResults,
       });
     }
     done += batchSize;

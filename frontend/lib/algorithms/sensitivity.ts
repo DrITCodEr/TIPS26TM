@@ -4,9 +4,11 @@ import type { FactorWeights } from "@/lib/types/factors";
 import type { MarktQuoten } from "@/lib/types/odds";
 import type { PlayerAggregates } from "@/lib/types/player";
 import type { AlgorithmVersion } from "@/lib/types/simulation";
+import type { LiveMatchResult } from "@/lib/data/liveResults";
 import { FAKTOREN } from "@/lib/data/factors";
 import { calculateStrengths } from "./index";
 import { simulateOneTournament } from "./monteCarlo";
+import { updateStrengthsFromLive } from "./liveUpdate";
 import { defaultRng, type Rng } from "./random";
 
 export interface SensitivityTeamStats {
@@ -42,6 +44,9 @@ export interface SensitivityConfig {
   surpriseSigma?: number;
   dispersion?: number;
   dfbAlwaysWins?: boolean;
+  liveResults?: Record<number, LiveMatchResult>;
+  useLiveResults?: boolean;
+  liveStrengthAlpha?: number;
   rng?: Rng;
   onProgress?: (progress: number) => void;
 }
@@ -96,6 +101,9 @@ export async function runSensitivity(
     surpriseSigma = 0,
     dispersion = 0,
     dfbAlwaysWins = false,
+    liveResults,
+    useLiveResults = false,
+    liveStrengthAlpha = 0,
     rng = defaultRng,
     onProgress,
   } = config;
@@ -105,13 +113,22 @@ export async function runSensitivity(
 
   for (let p = 0; p < numPerturbations; p++) {
     const weights = perturbWeights(baseWeights, rangePercent, rng);
-    const staerken = calculateStrengths(
+    const baseStaerken = calculateStrengths(
       algorithm,
       teams,
       weights,
       marktQuoten,
       playerAggregates,
     );
+    const staerken =
+      useLiveResults && liveResults && liveStrengthAlpha > 0
+        ? updateStrengthsFromLive(
+            baseStaerken,
+            liveResults,
+            schedule,
+            liveStrengthAlpha,
+          )
+        : baseStaerken;
 
     // Schlanke Sub-Sim: reuse Buffers
     const teamStats = teams.map(() => ({
@@ -146,6 +163,8 @@ export async function runSensitivity(
         surpriseSigma,
         dispersion,
         dfbAlwaysWins,
+        liveResults,
+        useLiveResults,
       });
     }
 
