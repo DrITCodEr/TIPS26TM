@@ -9,7 +9,7 @@ import { FAKTOREN } from "@lib/data/factors";
 import { PRESETS, type PresetKey } from "@lib/data/presets";
 import type { AlgorithmVersion } from "@lib/types/simulation";
 import { useT, LOCALES, LOCALE_FLAG, LOCALE_LABEL } from "@/i18n";
-import { Button, Card, InfoBanner, SectionTitle, formatSimCount } from "./ui";
+import { Button, Card, InfoBanner, SectionTitle, formatSimCount, useInfoToggle } from "./ui";
 
 const PRESET_ORDER: PresetKey[] = ["default", "balanced", "elo", "market", "form", "experience"];
 
@@ -26,6 +26,14 @@ function AlgorithmSwitcher() {
     if (v === "v4") return { title: t.algoInfo.v4Title, tag: t.algoInfo.v4Tag, desc: t.algoInfo.v4Desc, details: t.algoInfo.v4Details };
     return { title: t.algoInfo.v5Title, tag: t.algoInfo.v5Tag, desc: t.algoInfo.v5Desc, details: t.algoInfo.v5Details };
   };
+
+  const simple =
+    algorithm === "v5" ? t.algoInfo.simpleV5
+    : algorithm === "v4" ? t.algoInfo.simpleV4
+    : algorithm === "v3" ? t.algoInfo.simpleV3
+    : algorithm === "v2" ? t.algoInfo.simpleV2
+    : t.algoInfo.simpleV1;
+  const { button: algoInfoBtn, panel: algoInfoPanel } = useInfoToggle({ children: simple });
 
   return (
     <>
@@ -48,6 +56,11 @@ function AlgorithmSwitcher() {
           );
         })}
       </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, marginBottom: 2, fontSize: 11, fontWeight: 600, color: "var(--text-tertiary)" }}>
+        {algoInfoBtn}
+        <span>{t.algoInfo.infoLabel}</span>
+      </div>
+      {algoInfoPanel}
       <div className="algo-info" dangerouslySetInnerHTML={{ __html: info(algorithm).details }} />
     </>
   );
@@ -68,35 +81,65 @@ function Presets() {
   );
 }
 
+function FactorSliderCard({
+  factor,
+  value,
+  label,
+  help,
+  onChange,
+}: {
+  factor: typeof FAKTOREN[number];
+  value: number;
+  label: string;
+  help: string;
+  onChange: (v: number) => void;
+}) {
+  const pct = (value / factor.max) * 100;
+  const { button, panel } = useInfoToggle({ children: help, size: 18 });
+  return (
+    <div className="slider-card">
+      <div className="slider-header">
+        <div className="slider-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span className="slider-icon">{factor.icon}</span>
+          <span>{label}</span>
+          {button}
+        </div>
+        <div className="slider-value-pill">{value}%</div>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={factor.max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="tips-range"
+        style={{ "--val": `${pct}%` } as CSSProperties}
+      />
+      {panel}
+    </div>
+  );
+}
+
 function FactorSliders() {
   const weights = useStore((s) => s.weights);
   const setWeight = useStore((s) => s.setWeight);
   const { t } = useT();
+  const factorHelp = (key: string): string => {
+    const map = t.factors as Record<string, string>;
+    return map[`${key}Help`] ?? "";
+  };
   return (
     <div className="sliders-wrap">
-      {FAKTOREN.map((f) => {
-        const pct = (weights[f.key] / f.max) * 100;
-        return (
-          <div className="slider-card" key={f.key}>
-            <div className="slider-header">
-              <div className="slider-label">
-                <span className="slider-icon">{f.icon}</span>
-                {t.factors[f.key]}
-              </div>
-              <div className="slider-value-pill">{weights[f.key]}%</div>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={f.max}
-              value={weights[f.key]}
-              onChange={(e) => setWeight(f.key, Number(e.target.value))}
-              className="tips-range"
-              style={{ "--val": `${pct}%` } as CSSProperties}
-            />
-          </div>
-        );
-      })}
+      {FAKTOREN.map((f) => (
+        <FactorSliderCard
+          key={f.key}
+          factor={f}
+          value={weights[f.key]}
+          label={t.factors[f.key]}
+          help={factorHelp(f.key)}
+          onChange={(v) => setWeight(f.key, v)}
+        />
+      ))}
     </div>
   );
 }
@@ -108,6 +151,7 @@ function SimDepthSlider() {
   const N = selectNumSimulations({ numSimulationsIdx: idx });
   const display = formatSimCount(N);
   const pct = (idx / (SIM_LEVELS.length - 1)) * 100;
+  const { button, panel } = useInfoToggle({ children: t.setup.simDepthHelp });
 
   let warning: { tone: "warning" | "info"; text: string } | null = null;
   if (N >= 500_000) warning = { tone: "warning", text: t.setup.perfWarn500k(display, Math.round(N / 22_000)) };
@@ -118,13 +162,16 @@ function SimDepthSlider() {
     <Card>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>{t.setup.simDepth.title}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+            {t.setup.simDepth.title} {button}
+          </div>
           <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
             {t.setup.simDepth.hint}
           </div>
         </div>
         <div className="slider-value-pill" style={{ fontSize: 14, padding: "6px 12px" }}>{display}</div>
       </div>
+      {panel}
       <input
         type="range"
         min={0}
@@ -161,6 +208,7 @@ function SurpriseSlider() {
   const setValue = useStore((s) => s.setSurprisePercent);
   const { t } = useT();
   const sigmaPercent = ((value / 100) * 0.3 * 100).toFixed(0);
+  const { button, panel } = useInfoToggle({ children: t.setup.surpriseHelp });
   let hint = t.setup.surprise.hint0;
   if (value > 0 && value <= 20) hint = t.setup.surprise.hint1;
   else if (value <= 50) hint = t.setup.surprise.hint2;
@@ -172,7 +220,7 @@ function SurpriseSlider() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 15 }}>🎲</span> {t.setup.surprise.title}
+            <span style={{ fontSize: 15 }}>🎲</span> {t.setup.surprise.title} {button}
           </div>
           <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
             {t.setup.surprise.hint}
@@ -180,6 +228,7 @@ function SurpriseSlider() {
         </div>
         <div className="slider-value-pill" style={{ fontSize: 14, padding: "6px 12px" }}>{value}%</div>
       </div>
+      {panel}
       <input
         type="range"
         min={0}
@@ -208,6 +257,7 @@ function OverdispersionSlider() {
   const setValue = useStore((s) => s.setDispersionPercent);
   const { t } = useT();
   const phi = ((value / 100) * 1.5).toFixed(2);
+  const { button, panel } = useInfoToggle({ children: t.setup.overdispHelp });
   let hint = t.setup.overdisp.hint0;
   if (value > 0 && value <= 20) hint = t.setup.overdisp.hint1;
   else if (value <= 40) hint = t.setup.overdisp.hint2;
@@ -220,7 +270,7 @@ function OverdispersionSlider() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 15 }}>⚡</span> {t.setup.overdisp.title}
+            <span style={{ fontSize: 15 }}>⚡</span> {t.setup.overdisp.title} {button}
           </div>
           <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>
             {t.setup.overdisp.hint}
@@ -228,6 +278,7 @@ function OverdispersionSlider() {
         </div>
         <div className="slider-value-pill" style={{ fontSize: 14, padding: "6px 12px" }}>{value}%</div>
       </div>
+      {panel}
       <input
         type="range"
         min={0}
@@ -420,6 +471,19 @@ function LanguageSwitcher() {
   );
 }
 
+function SectionTitleWithInfo({ title, help }: { title: string; help: string }) {
+  const { button, panel } = useInfoToggle({ children: help });
+  return (
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <SectionTitle>{title}</SectionTitle>
+        {button}
+      </div>
+      {panel}
+    </>
+  );
+}
+
 export function SetupTab({ onSimulationDone }: { onSimulationDone: () => void }) {
   const idx = useStore((s) => s.numSimulationsIdx);
   const loading = useStore((s) => s.loading.kind);
@@ -439,7 +503,7 @@ export function SetupTab({ onSimulationDone }: { onSimulationDone: () => void })
       <SectionTitle>{t.setup.presetsTitle}</SectionTitle>
       <Presets />
 
-      <SectionTitle>{t.setup.weightsTitle}</SectionTitle>
+      <SectionTitleWithInfo title={t.setup.weightsTitle} help={t.setup.factorsHelp} />
       <FactorSliders />
 
       <SectionTitle>{t.setup.simDepthTitle}</SectionTitle>
