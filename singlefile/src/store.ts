@@ -41,6 +41,12 @@ interface State {
   /** 🇩🇪 Easter-Egg: DFB-Spiele werden deterministisch 3:0 für Deutschland. */
   dfbAlwaysWins: boolean;
 
+  // Stufe 1 + 2: Live-Ergebnisse in der Simulation berücksichtigen
+  /** Stufe 1: realer Score überschreibt Sim für abgepfiffene Spiele. */
+  useLiveResults: boolean;
+  /** Stufe 2: Slider 0..100 — Stärken-Update aus tatsächlichen Ergebnissen. */
+  liveStrengthPercent: number;
+
   // Live-Daten von ESPN (live-fetched, kein Build-Zeit-Snapshot)
   liveResults: Record<number, LiveMatchState>;
   liveFetchedAt: number | null; // Unix-Timestamp (ms) für Server-Render-Safety
@@ -63,6 +69,8 @@ interface State {
   setSurprisePercent: (p: number) => void;
   setDispersionPercent: (p: number) => void;
   setDfbAlwaysWins: (v: boolean) => void;
+  setUseLiveResults: (v: boolean) => void;
+  setLiveStrengthPercent: (p: number) => void;
   setSimulationResult: (r: SimulationResult | null) => void;
   setSensitivityResult: (r: SensitivityResult | null) => void;
   setLoading: (l: Partial<LoadingState> & { kind?: LoadingKind }) => void;
@@ -86,6 +94,8 @@ export const useStore = create<State>((set) => ({
   surprisePercent: 0,
   dispersionPercent: 0,
   dfbAlwaysWins: false,
+  useLiveResults: true,
+  liveStrengthPercent: 20,
   simulationResult: null,
   sensitivityResult: null,
   loading: initialLoading,
@@ -109,6 +119,9 @@ export const useStore = create<State>((set) => ({
   setDispersionPercent: (p) =>
     set({ dispersionPercent: Math.max(0, Math.min(100, Math.round(p))) }),
   setDfbAlwaysWins: (v) => set({ dfbAlwaysWins: v }),
+  setUseLiveResults: (v) => set({ useLiveResults: v }),
+  setLiveStrengthPercent: (p) =>
+    set({ liveStrengthPercent: Math.max(0, Math.min(100, Math.round(p))) }),
   setSimulationResult: (r) => set({ simulationResult: r }),
   setSensitivityResult: (r) => set({ sensitivityResult: r }),
   setLoading: (l) => set((s) => ({ loading: { ...s.loading, ...l } })),

@@ -6,7 +6,23 @@ import { TEAMS } from "@lib/data/teams";
 import { SCHEDULE } from "@lib/data/schedule";
 import { MARKT_QUOTEN } from "@lib/data/marktQuoten";
 import { PLAYER_AGGREGATES } from "@lib/data/playerAggregates";
+import type { LiveMatchResult } from "@lib/data/liveResults";
+import type { LiveMatchState } from "@/espn";
 import { translations, DEFAULT_LOCALE, type Locale } from "@/i18n/translations";
+
+/** Adapter: ESPN-Live-State → kanonisches LiveMatchResult-Format der Algo-Schicht. */
+function espnToLive(
+  state: Record<number, LiveMatchState>,
+): Record<number, LiveMatchResult> {
+  const out: Record<number, LiveMatchResult> = {};
+  for (const k of Object.keys(state)) {
+    const idx = Number(k);
+    const lr = state[idx];
+    if (!lr.completed) continue;
+    out[idx] = { goalsA: lr.scoreA, goalsB: lr.scoreB, isFinished: true };
+  }
+  return out;
+}
 
 const MIN_OVERLAY_MS = 2500;
 
@@ -53,6 +69,7 @@ export function useRunSimulation(onDone?: () => void) {
     await new Promise((r) => setTimeout(r, 350));
 
     let lastPhaseChange = 0;
+    const liveAsResult = espnToLive(s.liveResults);
     const result = await runMonteCarlo({
       algorithm: s.algorithm,
       weights: s.weights,
@@ -64,6 +81,9 @@ export function useRunSimulation(onDone?: () => void) {
       surpriseSigma: (s.surprisePercent / 100) * 0.3,
       dispersion: (s.dispersionPercent / 100) * 1.5,
       dfbAlwaysWins: s.dfbAlwaysWins,
+      liveResults: liveAsResult,
+      useLiveResults: s.useLiveResults,
+      liveStrengthAlpha: s.liveStrengthPercent / 100,
       onProgress: (p) => {
         const done = Math.round(p * N);
         const now = Date.now();
@@ -114,6 +134,7 @@ export function useRunSensitivity() {
     await new Promise((r) => setTimeout(r, 350));
 
     let lastPhaseChange = 0;
+    const liveAsResult = espnToLive(s.liveResults);
     const result = await runSensitivity({
       algorithm: s.algorithm,
       baseWeights: s.weights,
@@ -127,6 +148,9 @@ export function useRunSensitivity() {
       surpriseSigma: (s.surprisePercent / 100) * 0.3,
       dispersion: (s.dispersionPercent / 100) * 1.5,
       dfbAlwaysWins: s.dfbAlwaysWins,
+      liveResults: liveAsResult,
+      useLiveResults: s.useLiveResults,
+      liveStrengthAlpha: s.liveStrengthPercent / 100,
       onProgress: (p) => {
         const done = Math.round(p * N_PERT);
         const now = Date.now();
