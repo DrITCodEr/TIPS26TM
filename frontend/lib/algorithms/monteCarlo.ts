@@ -184,19 +184,19 @@ export function simulateOneTournament(args: {
     const m = schedule[mi];
     const a = m.idxA!;
     const b = m.idxB!;
-    let result: MatchResult;
     const lr = useLiveResults ? liveResults?.[mi] : undefined;
     const aIsDfb = dfbAlwaysWins && teams[a].name === "Deutschland";
     const bIsDfb = dfbAlwaysWins && teams[b].name === "Deutschland";
-    if (lr?.isFinished) {
-      // Stufe-1-Konditionierung: realer Score überschreibt Sim & Cheat-Mode
-      result = { toreA: lr.goalsA, toreB: lr.goalsB };
-    } else if (aIsDfb) {
-      result = { toreA: 3, toreB: 0 };
-    } else if (bIsDfb) {
-      result = { toreA: 0, toreB: 3 };
-    } else {
-      result = simulateMatch(
+
+    // `sampled` ist immer die Modell-Vorhersage — sie speist `matchStats`,
+    // damit der Nutzer sehen kann, was das Modell GETIPPT hätte, auch wenn
+    // wir in der Gruppentabelle das echte Resultat einsetzen.
+    // DFB-Cheat überschreibt aber auch matchStats (Fantasie-Modus).
+    let sampled: MatchResult;
+    if (aIsDfb) sampled = { toreA: 3, toreB: 0 };
+    else if (bIsDfb) sampled = { toreA: 0, toreB: 3 };
+    else
+      sampled = simulateMatch(
         algorithm,
         staerken[a],
         staerken[b],
@@ -204,27 +204,33 @@ export function simulateOneTournament(args: {
         surpriseSigma,
         dispersion,
       );
-    }
+
+    // `effective` ist das, was für Gruppentabelle/Bracket zählt.
+    // Stufe-1-Konditionierung lässt das reale Ergebnis durchschlagen — aber
+    // nur für die Tabelle, nicht für `matchStats`.
+    const effective: MatchResult = lr?.isFinished
+      ? { toreA: lr.goalsA, toreB: lr.goalsB }
+      : sampled;
 
     const ms = matchStats[mi];
-    ms.goalsA += result.toreA;
-    ms.goalsB += result.toreB;
-    if (result.toreA > result.toreB) ms.winA++;
-    else if (result.toreA < result.toreB) ms.winB++;
+    ms.goalsA += sampled.toreA;
+    ms.goalsB += sampled.toreB;
+    if (sampled.toreA > sampled.toreB) ms.winA++;
+    else if (sampled.toreA < sampled.toreB) ms.winB++;
     else ms.draw++;
-    const scoreKey = `${result.toreA}-${result.toreB}`;
+    const scoreKey = `${sampled.toreA}-${sampled.toreB}`;
     ms.scores[scoreKey] = (ms.scores[scoreKey] ?? 0) + 1;
 
     // 4 Teams pro Gruppe → linearer Scan ist ausreichend schnell
     const recA = groups[teams[a].group].find((r) => r.idx === a)!;
     const recB = groups[teams[b].group].find((r) => r.idx === b)!;
 
-    recA.tore += result.toreA;
-    recA.td += result.toreA - result.toreB;
-    recB.tore += result.toreB;
-    recB.td += result.toreB - result.toreA;
-    if (result.toreA > result.toreB) recA.pkt += 3;
-    else if (result.toreB > result.toreA) recB.pkt += 3;
+    recA.tore += effective.toreA;
+    recA.td += effective.toreA - effective.toreB;
+    recB.tore += effective.toreB;
+    recB.td += effective.toreB - effective.toreA;
+    if (effective.toreA > effective.toreB) recA.pkt += 3;
+    else if (effective.toreB > effective.toreA) recB.pkt += 3;
     else {
       recA.pkt += 1;
       recB.pkt += 1;

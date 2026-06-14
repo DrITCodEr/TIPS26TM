@@ -17,14 +17,12 @@ const firstDfbMatchIdx = SCHEDULE.findIndex(
 );
 
 describe("Stufe 1 — Konditionierung auf Live-Ergebnisse", () => {
-  it("ein abgepfiffenes Match wird in der Sim deterministisch übernommen", async () => {
+  it("matchStats spiegeln die Modell-Vorhersage (NICHT das echte Ergebnis), damit das Hit/Miss-Vergleich sinnvoll bleibt", async () => {
     const live: Record<number, LiveMatchResult> = {
       [firstDfbMatchIdx]: { goalsA: 5, goalsB: 1, isFinished: true },
     };
-    const m = SCHEDULE[firstDfbMatchIdx];
-    const dfbIsA = m.teamA === "Deutschland";
 
-    const N = 200;
+    const N = 500;
     const result = await runMonteCarlo({
       algorithm: "v2",
       weights: PRESETS.default,
@@ -39,18 +37,10 @@ describe("Stufe 1 — Konditionierung auf Live-Ergebnisse", () => {
     });
 
     const ms = result.matchStats[firstDfbMatchIdx];
-    // Bei Konditionierung wird das echte Ergebnis in jeder Iteration verwendet
-    if (dfbIsA) {
-      expect(ms.winA).toBe(N);
-      expect(ms.winB).toBe(0);
-    } else {
-      expect(ms.winA).toBe(0);
-      expect(ms.winB).toBe(N);
-    }
-    expect(ms.draw).toBe(0);
-    // Goals akkumulieren auf das echte Ergebnis × N
-    expect(ms.goalsA).toBe(dfbIsA ? 5 * N : 1 * N);
-    expect(ms.goalsB).toBe(dfbIsA ? 1 * N : 5 * N);
+    // matchStats werden gesampelt, NICHT auf das echte 5:1 fixiert →
+    // alle drei Outcomes (winA/draw/winB) sind möglich
+    expect(ms.winA + ms.draw + ms.winB).toBe(N);
+    expect(Math.max(ms.winA, ms.winB, ms.draw)).toBeLessThan(N);
   });
 
   it("useLiveResults=false ignoriert Live-Ergebnisse vollständig", async () => {
