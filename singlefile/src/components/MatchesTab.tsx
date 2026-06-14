@@ -106,8 +106,13 @@ export function MatchesTab({ nav: _nav }: { nav: (tab: Tab) => void }) {
               const predicted = winA >= draw && winA >= winB ? "A" : winB > draw ? "B" : "X";
               simHit = predicted === actual ? "✓" : "✗";
             }
+            // Karte tönt sich nach Tipp-Ergebnis: grün = getroffen, orange = verfehlt
             const cardStyle = isFinished
-              ? { background: "rgba(94, 234, 212, 0.06)", border: "1px solid rgba(94, 234, 212, 0.25)" }
+              ? simHit === "✓"
+                ? { background: "rgba(94, 234, 212, 0.08)", border: "1px solid rgba(94, 234, 212, 0.45)" }
+                : simHit === "✗"
+                  ? { background: "rgba(249, 115, 22, 0.07)", border: "1px solid rgba(249, 115, 22, 0.45)" }
+                  : { background: "rgba(94, 234, 212, 0.06)", border: "1px solid rgba(94, 234, 212, 0.25)" }
               : isLive
                 ? { background: "rgba(239, 68, 68, 0.06)", border: "1px solid rgba(239, 68, 68, 0.3)" }
                 : undefined;
@@ -124,6 +129,32 @@ export function MatchesTab({ nav: _nav }: { nav: (tab: Tab) => void }) {
                     {isLive && (
                       <span style={{ marginLeft: 6, padding: "2px 6px", borderRadius: 999, background: "var(--germany-red)", color: "#fff", fontSize: 9, fontWeight: 800 }}>
                         {t.matches.pillLive} {lr!.clock}
+                      </span>
+                    )}
+                    {simHit === "✓" && (
+                      <span
+                        title={t.matches.tippTooltipCorrect}
+                        style={{
+                          marginLeft: 6, padding: "2px 7px", borderRadius: 999,
+                          background: "var(--mint)", color: "var(--bg-deep)",
+                          fontSize: 9, fontWeight: 800,
+                          boxShadow: "0 0 6px rgba(94, 234, 212, 0.5)",
+                        }}
+                      >
+                        {t.matches.tippCorrect}
+                      </span>
+                    )}
+                    {simHit === "✗" && (
+                      <span
+                        title={t.matches.tippTooltipWrong}
+                        style={{
+                          marginLeft: 6, padding: "2px 7px", borderRadius: 999,
+                          background: "var(--orange)", color: "#fff",
+                          fontSize: 9, fontWeight: 800,
+                          boxShadow: "0 0 6px rgba(249, 115, 22, 0.5)",
+                        }}
+                      >
+                        {t.matches.tippWrong}
                       </span>
                     )}
                   </span>
