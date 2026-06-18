@@ -42,7 +42,12 @@ export function MatchesTab({ nav: _nav }: { nav: (tab: Tab) => void }) {
 
   return (
     <section>
-      {result && <AlgorithmBadge algorithm={result.algorithm} />}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+        <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+          {result && <AlgorithmBadge algorithm={result.algorithm} />}
+        </div>
+        <HitRateStat />
+      </div>
       <LiveStatusBanner
         liveFetchedAt={liveFetchedAt}
         liveError={liveError}
@@ -240,6 +245,108 @@ export function MatchesTab({ nav: _nav }: { nav: (tab: Tab) => void }) {
         </div>
       ))}
     </section>
+  );
+}
+
+/**
+ * Großer Trefferquoten-Indikator oben rechts im Spiele-Tab.
+ * Zählt: wieviel der abgepfiffenen Matches hat das Modell beim
+ * Ausgang (1/X/2) korrekt vorhergesagt?
+ *
+ * Voraussetzung: matchStats spiegeln die reine Modell-Vorhersage
+ * (gesampelt, NICHT auf das echte Ergebnis fixiert). Das ist dank
+ * der Stufe-1-Entkopplung in monteCarlo.ts der Fall.
+ *
+ * Renderlogik: zeigt sich nur, wenn eine Simulation gelaufen ist UND
+ * mindestens ein Spiel abgepfiffen wurde — sonst wäre der Wert nicht
+ * aussagekräftig.
+ */
+function HitRateStat() {
+  const result = useStore((s) => s.simulationResult);
+  const liveResults = useStore((s) => s.liveResults);
+  const { t } = useT();
+
+  if (!result) return null;
+  const N = result.numSimulations;
+  if (N === 0) return null;
+
+  let hits = 0;
+  let total = 0;
+  for (const k of Object.keys(liveResults)) {
+    const idx = Number(k);
+    const lr = liveResults[idx];
+    if (!lr.completed) continue;
+    if (idx < 0 || idx >= result.matchStats.length) continue;
+    const ms = result.matchStats[idx];
+    const winA = ms.winA / N;
+    const draw = ms.draw / N;
+    const winB = ms.winB / N;
+    const actual = lr.scoreA > lr.scoreB ? "A" : lr.scoreA < lr.scoreB ? "B" : "X";
+    const predicted = winA >= draw && winA >= winB ? "A" : winB > draw ? "B" : "X";
+    if (predicted === actual) hits++;
+    total++;
+  }
+
+  if (total === 0) return null;
+
+  const pct = (hits / total) * 100;
+  // Farbcode wie Ampel: ≥50 % grün, 33–49 % bernstein, <33 % orange
+  const color =
+    pct >= 50 ? "var(--mint)" : pct >= 33 ? "#fbbf24" : "var(--orange)";
+  const bg =
+    pct >= 50 ? "rgba(94, 234, 212, 0.10)"
+    : pct >= 33 ? "rgba(251, 191, 36, 0.10)"
+    : "rgba(249, 115, 22, 0.10)";
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-end",
+        padding: "8px 14px",
+        borderRadius: 14,
+        background: bg,
+        border: `1px solid ${color}`,
+        boxShadow: `0 0 14px ${color}33`,
+        flexShrink: 0,
+        minWidth: 110,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          textTransform: "uppercase",
+          letterSpacing: 1,
+          color: "var(--text-tertiary)",
+        }}
+      >
+        {t.matches.hitRateLabel}
+      </div>
+      <div
+        style={{
+          fontSize: 30,
+          fontWeight: 800,
+          color,
+          lineHeight: 1.05,
+          fontVariantNumeric: "tabular-nums",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {pct.toFixed(0)}%
+      </div>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          color: "var(--text-secondary)",
+          marginTop: 2,
+        }}
+      >
+        {t.matches.hitRateDetail(hits, total)}
+      </div>
+    </div>
   );
 }
 
