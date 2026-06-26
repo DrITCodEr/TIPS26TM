@@ -503,6 +503,10 @@ const de = {
     notStarted: "Noch nicht gespielt",
     expandAll: "Alle ausklappen",
     collapseAll: "Alle einklappen",
+    bracketProgress: (done: number, total: number) =>
+      `${done} / ${total} Gruppen abgeschlossen`,
+    bracketProvisional: "Vorläufig aus laufender Tabelle",
+    bracketFinal: "Finale Auflösung",
   },
   // Englische Anzeige-Namen für Teams; intern bleiben die deutschen
   // Namen als kanonische Keys (für ESPN-Mapping, DFB-Identifikation, etc.)
@@ -1028,6 +1032,10 @@ const en: typeof de = {
     notStarted: "Not yet played",
     expandAll: "Expand all",
     collapseAll: "Collapse all",
+    bracketProgress: (done: number, total: number) =>
+      `${done} / ${total} groups finished`,
+    bracketProvisional: "Provisional from current standings",
+    bracketFinal: "Final resolution",
   },
   teams: {
     Mexiko: "Mexico",

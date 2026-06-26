@@ -3,7 +3,7 @@ import { useStore } from "@/store";
 import { TEAMS } from "@lib/data/teams";
 import { SCHEDULE } from "@lib/data/schedule";
 import { computeLiveStandings } from "@lib/algorithms/liveStandings";
-import { deriveLiveBracket } from "@lib/algorithms/liveBracket";
+import { countFinishedGroups, deriveLiveBracket } from "@lib/algorithms/liveBracket";
 import { slotLabel } from "@lib/algorithms/fifaBracket";
 import { R16_ROUND, QF_ROUND, SF_ROUND } from "@lib/data/koBracket";
 import type { LiveMatchResult } from "@lib/data/liveResults";
@@ -23,7 +23,10 @@ function teamCode(name: string): string {
 // ============================================================
 
 interface BracketSlotView {
+  /** Finale Auflösung (Gruppe komplett durch). */
   teamIdx: number | null;
+  /** Vorläufige Auflösung aus laufender Tabelle — wird kursiv/leicht abgedämpft dargestellt. */
+  provisionalTeamIdx?: number | null;
   label: string;
 }
 
@@ -47,8 +50,16 @@ function buildBracketRounds(
   const r32 = deriveLiveBracket(liveStandings);
   const r32Matches: BracketMatchView[] = r32.map((m) => ({
     matchNo: m.matchNo,
-    a: { teamIdx: m.a.resolvedTeamIdx, label: slotLabel(m.a.slot) },
-    b: { teamIdx: m.b.resolvedTeamIdx, label: slotLabel(m.b.slot) },
+    a: {
+      teamIdx: m.a.resolvedTeamIdx,
+      provisionalTeamIdx: m.a.provisionalTeamIdx,
+      label: slotLabel(m.a.slot),
+    },
+    b: {
+      teamIdx: m.b.resolvedTeamIdx,
+      provisionalTeamIdx: m.b.provisionalTeamIdx,
+      label: slotLabel(m.b.slot),
+    },
   }));
 
   const r16Matches: BracketMatchView[] = R16_ROUND.feeders.map(
@@ -92,7 +103,7 @@ function buildBracketRounds(
 // Compact Match-Card für den Tree
 // ============================================================
 
-function TreeMatchCard({ match, teamName }: { match: BracketMatchView; teamName: (key: string) => string }) {
+function TreeMatchCard({ match, teamName, provisionalTooltip }: { match: BracketMatchView; teamName: (key: string) => string; provisionalTooltip: string }) {
   const renderSide = (slot: BracketSlotView) => {
     if (slot.teamIdx !== null) {
       const team = TEAMS[slot.teamIdx];
@@ -104,6 +115,20 @@ function TreeMatchCard({ match, teamName }: { match: BracketMatchView; teamName:
         >
           <span style={{ fontSize: 14 }}>{team.flag}</span>
           <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 0.3 }}>{teamCode(team.name)}</span>
+        </div>
+      );
+    }
+    if (slot.provisionalTeamIdx != null) {
+      const team = TEAMS[slot.provisionalTeamIdx];
+      const isDfb = team.name === "Deutschland";
+      return (
+        <div
+          title={`${teamName(team.name)} · ${provisionalTooltip}`}
+          style={{ display: "flex", alignItems: "center", gap: 4, fontStyle: "italic", color: isDfb ? "#fca5a5" : "var(--text-secondary)", opacity: 0.85 }}
+        >
+          <span style={{ fontSize: 13 }}>{team.flag}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.3 }}>{teamCode(team.name)}</span>
+          <span style={{ fontSize: 8, fontWeight: 700, color: "var(--text-tertiary)", marginLeft: 2 }}>{slot.label}</span>
         </div>
       );
     }
@@ -137,7 +162,7 @@ function TreeMatchCard({ match, teamName }: { match: BracketMatchView; teamName:
 // Horizontal-scrollender K.o.-Bracket-Tree
 // ============================================================
 
-function KoBracketTree({ rounds, teamName, scrollHint }: { rounds: BracketRoundView[]; teamName: (key: string) => string; scrollHint: string }) {
+function KoBracketTree({ rounds, teamName, scrollHint, provisionalTooltip }: { rounds: BracketRoundView[]; teamName: (key: string) => string; scrollHint: string; provisionalTooltip: string }) {
   // Fixe Höhe: R32 hat 16 Matches → 16 × Slot-Höhe
   const ROW_H = 56;
   const TOTAL_H = ROW_H * 16;
@@ -186,7 +211,7 @@ function KoBracketTree({ rounds, teamName, scrollHint }: { rounds: BracketRoundV
                   key={m.matchNo}
                   style={{ flex: 1, display: "flex", alignItems: "center", padding: "0 2px" }}
                 >
-                  <TreeMatchCard match={m} teamName={teamName} />
+                  <TreeMatchCard match={m} teamName={teamName} provisionalTooltip={provisionalTooltip} />
                 </div>
               ))}
             </div>
@@ -401,6 +426,7 @@ export function TreeTab() {
     [liveAsResult],
   );
   const rounds = useMemo(() => buildBracketRounds(standings, t), [standings, t]);
+  const finishedGroups = countFinishedGroups(standings);
 
   return (
     <section>
@@ -409,8 +435,23 @@ export function TreeTab() {
       </InfoBanner>
 
       <SectionTitle>{t.tree.koPhaseTitle}</SectionTitle>
+      <div
+        style={{
+          fontSize: 11, fontWeight: 600, padding: "8px 12px", borderRadius: 10,
+          marginBottom: 8, background: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)", color: "var(--text-secondary)",
+          display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8,
+        }}
+      >
+        <span>
+          {t.tree.bracketProgress(finishedGroups, 12)}
+        </span>
+        <span style={{ fontSize: 9, color: "var(--text-tertiary)" }}>
+          {finishedGroups === 12 ? t.tree.bracketFinal : t.tree.bracketProvisional}
+        </span>
+      </div>
       <Card style={{ padding: 8 }}>
-        <KoBracketTree rounds={rounds} teamName={teamName} scrollHint={t.tree.scrollHint} />
+        <KoBracketTree rounds={rounds} teamName={teamName} scrollHint={t.tree.scrollHint} provisionalTooltip={t.tree.bracketProvisional} />
       </Card>
 
       <SectionTitle>{t.tree.groupStageTitle}</SectionTitle>
