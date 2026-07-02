@@ -191,9 +191,9 @@ export function App() {
     let cancelled = false;
     const run = async () => {
       try {
-        const { results, fetchedAt } = await fetchLiveFromEspn();
+        const { results, ko, fetchedAt } = await fetchLiveFromEspn();
         if (cancelled) return;
-        setLiveResults(results, fetchedAt.getTime());
+        setLiveResults(results, ko, fetchedAt.getTime());
       } catch (e) {
         if (cancelled) return;
         setLiveError(e instanceof Error ? e.message : String(e));

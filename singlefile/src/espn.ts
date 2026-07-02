@@ -1,8 +1,16 @@
 import { SCHEDULE } from "@lib/data/schedule";
+import { classifyKoRound, type LiveKoMatch } from "@lib/algorithms/koRounds";
 
 /**
  * ESPN Soccer-API: kostenlos, CORS-offen, kein Key — perfekt für Browser-
  * Direkt-Fetch. Liefert Match-Status pro Tag, gemappt auf unseren Spielplan.
+ *
+ * Gruppenphase: Events werden über Team-Namen auf den 72-Spiele-SCHEDULE
+ * gemappt (Index-stabil). K.o.-Phase: die Paarungen stehen NICHT im
+ * SCHEDULE — sie werden separat als `ko`-Liste zurückgegeben, inklusive
+ * "pre"-Fixtures (angesetzte, noch nicht angepfiffene Spiele), damit der
+ * Turnierbaum echte Paarungen zeigt statt sie fehleranfällig aus
+ * Tabellenständen abzuleiten.
  *
  * Wenn die HTML lokal per Doppelklick geöffnet wird (file://), blockiert
  * der Browser den externen fetch — `IS_FILE_CONTEXT` erkennt das und
@@ -21,8 +29,12 @@ export interface LiveMatchState {
 
 export interface LiveFetchResult {
   results: Record<number, LiveMatchState>;
+  /** K.o.-Spiele (R32 → Finale) in Kickoff-Reihenfolge, inkl. Vorschau-Fixtures */
+  ko: LiveKoMatch[];
   fetchedAt: Date;
 }
+
+export type { LiveKoMatch };
 
 export const IS_FILE_CONTEXT =
   typeof location !== "undefined" &&
@@ -109,6 +121,7 @@ export async function fetchLiveFromEspn(): Promise<LiveFetchResult> {
   if (!data.events || !data.events.length) throw new Error("keine Events");
 
   const results: Record<number, LiveMatchState> = {};
+  const ko: LiveKoMatch[] = [];
 
   for (const ev of data.events as any[]) {
     if (!ev.date || !ev.date.startsWith("2026")) continue;
@@ -121,6 +134,45 @@ export async function fetchLiveFromEspn(): Promise<LiveFetchResult> {
     const nameHome = mapName(home.team?.displayName);
     const nameAway = mapName(away.team?.displayName);
     const state = comp.status?.type?.state ?? "pre";
+    const completed = comp.status?.type?.completed === true;
+    const scoreHome = parseInt(home.score, 10) || 0;
+    const scoreAway = parseInt(away.score, 10) || 0;
+    const ts = Date.parse(ev.date);
+
+    // K.o.-Phase (ab 28.06. ET): NICHT im SCHEDULE — separat einsammeln,
+    // inklusive "pre"-Fixtures für den Turnierbaum.
+    const round = Number.isFinite(ts) ? classifyKoRound(ts) : null;
+    if (round) {
+      const penHome = home.shootoutScore != null ? parseInt(home.shootoutScore, 10) : undefined;
+      const penAway = away.shootoutScore != null ? parseInt(away.shootoutScore, 10) : undefined;
+      let winner: "A" | "B" | undefined;
+      if (completed) {
+        if (home.winner === true) winner = "A";
+        else if (away.winner === true) winner = "B";
+        else if (scoreHome !== scoreAway) winner = scoreHome > scoreAway ? "A" : "B";
+        else if (penHome != null && penAway != null && penHome !== penAway) {
+          winner = penHome > penAway ? "A" : "B";
+        }
+      }
+      ko.push({
+        round,
+        ts,
+        teamA: nameHome,
+        teamB: nameAway,
+        scoreA: scoreHome,
+        scoreB: scoreAway,
+        state: state === "post" ? "post" : state === "in" ? "in" : "pre",
+        clock: comp.status?.displayClock ?? "",
+        completed,
+        penA: Number.isFinite(penHome) ? penHome : undefined,
+        penB: Number.isFinite(penAway) ? penAway : undefined,
+        winner,
+        venue: comp.venue?.fullName ?? "",
+      });
+      continue;
+    }
+
+    // Gruppenphase: nur laufende/beendete Spiele, gemappt auf SCHEDULE-Index
     if (state === "pre") continue;
 
     const idx = SCHEDULE.findIndex(
@@ -132,16 +184,15 @@ export async function fetchLiveFromEspn(): Promise<LiveFetchResult> {
 
     const m = SCHEDULE[idx];
     const flipped = m.teamA === nameAway;
-    const scoreHome = parseInt(home.score, 10) || 0;
-    const scoreAway = parseInt(away.score, 10) || 0;
 
     results[idx] = {
       scoreA: flipped ? scoreAway : scoreHome,
       scoreB: flipped ? scoreHome : scoreAway,
       state: state === "post" ? "post" : "in",
       clock: comp.status?.displayClock ?? "",
-      completed: comp.status?.type?.completed === true,
+      completed,
     };
   }
-  return { results, fetchedAt: new Date() };
+  ko.sort((a, b) => a.ts - b.ts);
+  return { results, ko, fetchedAt: new Date() };
 }
