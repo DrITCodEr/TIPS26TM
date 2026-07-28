@@ -182,6 +182,8 @@ export function App() {
   // Hook MUSS vor dem conditional Return stehen (Rules-of-Hooks).
   useEffect(() => {
     if (locale === null) return;
+    // Konservierter Endstand eingebacken → kein ESPN-Polling mehr nötig
+    if (useStore.getState().frozen) return;
     const setLiveResults = useStore.getState().setLiveResults;
     const setLiveError = useStore.getState().setLiveError;
     if (IS_FILE_CONTEXT) {
