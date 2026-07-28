@@ -6,7 +6,7 @@ import type {
 import type { FactorWeights } from "@lib/types/factors";
 import { PRESETS, type PresetKey } from "@lib/data/presets";
 import type { SensitivityResult } from "@lib/algorithms/sensitivity";
-import type { LiveMatchState } from "@/espn";
+import type { LiveKoMatch, LiveMatchState } from "@/espn";
 import type { Locale } from "@/i18n/translations";
 import { loadStoredLocale, storeLocale } from "@/i18n";
 
@@ -49,6 +49,8 @@ interface State {
 
   // Live-Daten von ESPN (live-fetched, kein Build-Zeit-Snapshot)
   liveResults: Record<number, LiveMatchState>;
+  /** Echte K.o.-Paarungen + Ergebnisse (R32 → Finale) aus dem ESPN-Feed */
+  liveKo: LiveKoMatch[];
   liveFetchedAt: number | null; // Unix-Timestamp (ms) für Server-Render-Safety
   liveError: string | null;
 
@@ -79,6 +81,7 @@ interface State {
   setBacktestAlgorithm: (a: "v1" | "v2-nomarket") => void;
   setLiveResults: (
     r: Record<number, LiveMatchState>,
+    ko: LiveKoMatch[],
     fetchedAt: number,
   ) => void;
   setLiveError: (e: string | null) => void;
@@ -103,6 +106,7 @@ export const useStore = create<State>((set) => ({
   backtestAlgorithm: "v1",
 
   liveResults: {},
+  liveKo: [],
   liveFetchedAt: null,
   liveError: null,
 
@@ -128,8 +132,8 @@ export const useStore = create<State>((set) => ({
   resetLoading: () => set({ loading: initialLoading }),
   setBacktestYear: (y) => set({ backtestYear: y }),
   setBacktestAlgorithm: (a) => set({ backtestAlgorithm: a }),
-  setLiveResults: (r, fetchedAt) =>
-    set({ liveResults: r, liveFetchedAt: fetchedAt, liveError: null }),
+  setLiveResults: (r, ko, fetchedAt) =>
+    set({ liveResults: r, liveKo: ko, liveFetchedAt: fetchedAt, liveError: null }),
   setLiveError: (e) => set({ liveError: e }),
   setLocale: (l) => {
     storeLocale(l);

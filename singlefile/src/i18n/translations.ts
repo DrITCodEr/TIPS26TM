@@ -507,6 +507,10 @@ const de = {
       `${done} / ${total} Gruppen abgeschlossen`,
     bracketProvisional: "Vorläufig aus laufender Tabelle",
     bracketFinal: "Finale Auflösung",
+    bracketReal: "Echte Paarungen (ESPN live)",
+    koProgress: (done: number, total: number) =>
+      `${done} / ${total} K.o.-Spiele abgepfiffen`,
+    penShort: "i.E.",
   },
   // Englische Anzeige-Namen für Teams; intern bleiben die deutschen
   // Namen als kanonische Keys (für ESPN-Mapping, DFB-Identifikation, etc.)
@@ -1036,6 +1040,10 @@ const en: typeof de = {
       `${done} / ${total} groups finished`,
     bracketProvisional: "Provisional from current standings",
     bracketFinal: "Final resolution",
+    bracketReal: "Real fixtures (ESPN live)",
+    koProgress: (done: number, total: number) =>
+      `${done} / ${total} knockout matches finished`,
+    penShort: "pens",
   },
   teams: {
     Mexiko: "Mexico",
