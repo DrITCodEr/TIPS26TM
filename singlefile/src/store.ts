@@ -7,6 +7,7 @@ import type { FactorWeights } from "@lib/types/factors";
 import { PRESETS, type PresetKey } from "@lib/data/presets";
 import type { SensitivityResult } from "@lib/algorithms/sensitivity";
 import type { LiveKoMatch, LiveMatchState } from "@/espn";
+import { FINAL_SNAPSHOT } from "@/data/finalSnapshot";
 import type { Locale } from "@/i18n/translations";
 import { loadStoredLocale, storeLocale } from "@/i18n";
 
@@ -53,6 +54,8 @@ interface State {
   liveKo: LiveKoMatch[];
   liveFetchedAt: number | null; // Unix-Timestamp (ms) für Server-Render-Safety
   liveError: string | null;
+  /** true = Endstand aus finalSnapshot.ts eingebacken, kein Polling mehr */
+  frozen: boolean;
 
   // Spracheinstellung. null = noch nicht gewählt → Splash zeigen.
   locale: Locale | null;
@@ -105,10 +108,16 @@ export const useStore = create<State>((set) => ({
   backtestYear: 2022,
   backtestAlgorithm: "v1",
 
-  liveResults: {},
-  liveKo: [],
-  liveFetchedAt: null,
+  // Konservierter Endstand (falls final) als Initial-Daten — die App
+  // funktioniert dann komplett ohne ESPN.
+  liveResults: FINAL_SNAPSHOT.final ? FINAL_SNAPSHOT.results : {},
+  liveKo: FINAL_SNAPSHOT.final ? FINAL_SNAPSHOT.ko : [],
+  liveFetchedAt:
+    FINAL_SNAPSHOT.final && FINAL_SNAPSHOT.frozenAt
+      ? Date.parse(FINAL_SNAPSHOT.frozenAt)
+      : null,
   liveError: null,
+  frozen: FINAL_SNAPSHOT.final,
 
   locale: loadStoredLocale(),
 

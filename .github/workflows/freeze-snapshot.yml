@@ -1,0 +1,85 @@
+name: Freeze Final Snapshot
+
+# Einmaliger Konservierungs-Lauf nach Turnier-Ende:
+# 1. Holt den kompletten Endstand von ESPN (Gruppenphase + K.o.)
+# 2. Backt ihn in singlefile/src/data/finalSnapshot.ts ein
+# 3. Committet Snapshot + neu gebaute tips26-app.html auf main
+# 4. Deployt die eingefrorene Version direkt auf GitHub Pages
+#
+# Danach ist die App vollständig unabhängig von ESPN — sie pollt nicht
+# mehr und zeigt dauerhaft den konservierten Endstand. Der Lauf bricht
+# ab, wenn der Feed nicht mehr alle 72 + 32 Spiele als beendet listet.
+#
+# Manuell starten: Actions → "Freeze Final Snapshot" → Run workflow
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Fetch final results and write snapshot
+        run: node scripts/freeze-final-snapshot.mjs
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install singlefile deps
+        working-directory: singlefile
+        run: npm ci
+
+      - name: Build frozen single-file HTML
+        working-directory: singlefile
+        run: npm run build
+
+      - name: Commit snapshot + frozen build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add singlefile/src/data/finalSnapshot.ts tips26-app.html
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen — Snapshot war bereits aktuell."
+          else
+            git commit -m "Konservierung: WM-2026-Endstand eingefroren (Auto-Freeze)"
+            git push origin main
+          fi
+
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site
+          cp singlefile/dist/index.html _site/index.html
+          cp singlefile/dist/index.html _site/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: freeze
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

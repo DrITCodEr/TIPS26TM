@@ -294,6 +294,8 @@ const de = {
     tippTooltipWrong: "Sim hat den Ausgang nicht getroffen.",
     hitRateLabel: "Trefferquote",
     hitRateDetail: (h: number, total: number) => `${h} von ${total} Tipps`,
+    archived: (date: string) =>
+      `🏁 Turnier beendet — Endstand konserviert${date ? ` (${date})` : ""}. Keine Live-Abfragen mehr.`,
     vs: "vs",
     groupPrefix: "Gruppe",
     avgGoals: "Tore",
@@ -829,6 +831,8 @@ const en: typeof de = {
     tippTooltipWrong: "Sim missed the outcome.",
     hitRateLabel: "Hit Rate",
     hitRateDetail: (h: number, total: number) => `${h} of ${total} picks`,
+    archived: (date: string) =>
+      `🏁 Tournament finished — final results preserved${date ? ` (${date})` : ""}. No more live requests.`,
     vs: "vs",
     groupPrefix: "Group",
     avgGoals: "goals",

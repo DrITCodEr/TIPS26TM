@@ -361,7 +361,24 @@ function LiveStatusBanner({
   liveCount: number;
   finishedCount: number;
 }) {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const frozen = useStore((s) => s.frozen);
+  if (frozen) {
+    const dateStr = liveFetchedAt
+      ? new Date(liveFetchedAt).toLocaleDateString(locale === "de" ? "de-DE" : "en-US")
+      : "";
+    return (
+      <div
+        style={{
+          fontSize: 11, fontWeight: 600, padding: "8px 12px", borderRadius: 10,
+          marginBottom: 10, background: "rgba(94, 234, 212, 0.07)",
+          border: "1px solid rgba(94, 234, 212, 0.25)", color: "var(--text-secondary)",
+        }}
+      >
+        {t.matches.archived(dateStr)}
+      </div>
+    );
+  }
   if (liveFetchedAt) {
     const d = new Date(liveFetchedAt);
     const hh = String(d.getHours()).padStart(2, "0");
